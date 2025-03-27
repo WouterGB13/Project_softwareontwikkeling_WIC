@@ -1,3 +1,3 @@
 #test
 print("test geslaagd")
-print('lala')
+print('fuckass programma')
