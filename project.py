@@ -39,11 +39,18 @@ class Game:
             if event.type == pg.QUIT:
                 self.playing = False
                 self.running = False
+    
+    def teken_grid(self):
+        for x in range(0, BREEDTE, TILESIZE):
+            pg.draw.line(self.screen, LICHTGRIJS, (x,0) , (x,HOOGTE), 1)
+        for y in range(0, HOOGTE, TILESIZE):
+            pg.draw.line(self.screen, LICHTGRIJS, (0,y) , (BREEDTE,y), 1)
                 
 
     def draw(self):
         # teken frame
-        self.screen.fill(ZWART)
+        self.screen.fill(ACHTERGRONDKLEUR)
+        self.teken_grid()
         #altijd laatste line van renderen
         pg.display.flip() 
 
