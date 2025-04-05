@@ -1,4 +1,5 @@
 #Game opties en settings
+TITEL = "METAL GEAR SOLID V(UB): THE PHANTOM KATER"  
 BREEDTE = 360
 HOOGTE = 480
 FPS = 30
