@@ -60,6 +60,7 @@ class Game:
             if event.type == pg.QUIT:
                 self.playing = False
                 self.running = False
+
     
     def teken_grid(self):
         for x in range(0, BREEDTE, TILESIZE):
