@@ -20,5 +20,18 @@ class Player():
         self.rect_y = self.y * TILESIZE
 
     #zelf tekenen is nodig omdat we geen sprite super-class mogen gebruiken    
-    def draw(self):
+    def draw(self): #uiteindelijk universeel maken, geraak er momenteel niet aan uit -W
         pg.draw.rect(self.game.screen, self.kleur,(self.rect_x,self.rect_y,TILESIZE,TILESIZE)) 
+
+class Wall():
+    def __init__(self, game, x, y): #geen kleurargument want alle muren zullen zelfde kleur hebben (in basic versie toch)
+        self.game = game
+        self.kleur = GROEN
+        self.x = x * TILESIZE
+        self.y = y * TILESIZE
+
+    def update(self):
+        pass
+    
+    def draw(self): #uiteindelijk universeel maken, geraak er momenteel niet aan uit -W
+        pg.draw.rect(self.game.screen, self.kleur,(self.x,self.y,TILESIZE,TILESIZE))

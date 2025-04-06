@@ -15,13 +15,17 @@ class Game:
         self.screen = pg.display.set_mode((BREEDTE,HOOGTE))
         pg.display.set_caption(TITEL)
         self.clock = pg.time.Clock()
-        pg.key.set_repeat(30,30)
+        pg.key.set_repeat(30,100)
         self.running = True
     
     def new(self):
         #start nieuwe game
         self.player = Player(self,10,10,GEEL) #werkt met squares als coord. , niet met pixels
         entitylijst.append(self.player)
+        for x in range(10,20):
+            wall = Wall(self,x,5)
+            entitylijst.append(wall)
+
 
     def run(self):
         # game loop
