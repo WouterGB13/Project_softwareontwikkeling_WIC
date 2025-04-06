@@ -8,13 +8,13 @@ entitylijst = []
 class Player():
     def __init__(self,game,x,y, kleur): #gebruik relatieve posities zodat de player altijd binnen squares blijft
         self.game = game
-        self.x = x * TILESIZE # *TILESIZE om op juiste plek te spawnen
-        self.y = y * TILESIZE
-        self.breedte = TILESIZE
-        self.hoogte = TILESIZE
+        self.image = pg.Surface((TILESIZE,TILESIZE))
+        self.image.fill(kleur)
         self.vx = 0
         self.vy = 0
-        self.kleur = kleur
+        self.rect = self.image.get_rect()
+        self.x = x * TILESIZE # *TILESIZE om op juiste plek te spawnen
+        self.y = y * TILESIZE
 
     def get_keys(self):
         self.vx, self.vy = 0, 0
@@ -34,7 +34,7 @@ class Player():
     def object_collision(self):
         collisionlist = []
         for wall in self.game.walls:
-            if (self.x + self.breedte > wall.rect_x and self.x < wall.rect_x + TILESIZE and self.y + self.hoogte > wall.rect_y and self.y < wall.rect_y + TILESIZE):
+            if (self.x + self.rect.width > wall.rect.x and self.x < wall.rect.x + TILESIZE and self.y + self.rect.height > wall.rect.y and self.y < wall.rect.y + TILESIZE):
                 collisionlist.append(wall)
         return collisionlist
 
@@ -43,48 +43,40 @@ class Player():
         if dir == 'x':
             for hit in hits:
                 if self.vx > 0:
-                    self.x = hit.rect_x - self.breedte
+                    self.x = hit.rect.left - self.rect.width
                 if self.vx < 0:
-                    self.x = hit.rect_x + TILESIZE
+                    self.x = hit.rect.right
                 self.vx = 0
-                self.rect_x = self.x
+                self.rect.x = self.x
         if dir == 'y':
             for hit in hits:
                 if self.vy > 0:
-                    self.y = hit.rect_y - self.hoogte
+                    self.y = hit.rect.top - self.rect.height
                 if self.vy < 0:
-                    self.y = hit.rect_y + TILESIZE
+                    self.y = hit.rect.bottom
                 self.vy = 0
-                self.rect_y = self.y
+                self.rect.y = self.y
 
     def update(self):
         self.get_keys()
-        self.x_hitbox = (int(self.x), int(self.x + self.breedte)) 
-        self.y_hitbox = (int(self.y), int(self.y + self.hoogte))
         self.x += self.vx * self.game.dt
-        self.rect_x = self.x
-        self.collide_with_walls('x')
         self.y += self.vy * self.game.dt
-        self.rect_y = self.y
+        self.rect.x = self.x
+        self.collide_with_walls('x')
+        self.rect.y = self.y
         self.collide_with_walls('y')
-        
-    #zelf tekenen is nodig omdat we geen sprite super-class mogen gebruiken    
-    def draw(self): #uiteindelijk universeel maken, geraak er momenteel niet aan uit -W
-        pg.draw.rect(self.game.screen, self.kleur,(self.rect_x,self.rect_y,self.breedte,self.hoogte)) 
 
 class Wall():
     def __init__(self, game, x, y): #geen kleurargument want alle muren zullen zelfde kleur hebben (in basic versie toch)
         self.game = game
         self.kleur = GROEN
+        self.image = pg.Surface((TILESIZE,TILESIZE))
+        self.image.fill(self.kleur)
+        self.rect = self.image.get_rect()
         self.x = x #relatieve waarde pas op
-        self.rect_x = x*TILESIZE #absolute waarde
         self.y = y
-        self.rect_y = y*TILESIZE
-        self.x_hitbox = (self.rect_x,self.rect_x+TILESIZE)
-        self.y_hitbox = (self.rect_y,self.rect_y+TILESIZE)
-
+        self.rect.x = x*TILESIZE
+        self.rect.y = y*TILESIZE
+        
     def update(self):
         pass
-    
-    def draw(self): #uiteindelijk universeel maken, geraak er momenteel niet aan uit -W
-        pg.draw.rect(self.game.screen, self.kleur,(self.rect_x,self.rect_y,TILESIZE,TILESIZE))

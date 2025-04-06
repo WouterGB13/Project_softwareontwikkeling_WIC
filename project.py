@@ -7,6 +7,7 @@
 import pygame as pg
 from GameSettings import * #importeer alle setting zonder steeds GameSettings."setting" te moeten typen
 from entities import *
+from map_en_camera import *
 
 class Game:
     def __init__(self):
@@ -16,19 +17,15 @@ class Game:
         self.screen = pg.display.set_mode((BREEDTE,HOOGTE))
         pg.display.set_caption(TITEL)
         self.clock = pg.time.Clock()
-        pg.key.set_repeat(30,100)
         self.running = True
     
     def load_data(self):
-        self.kaartdata = []
-        with open('Kaart.txt','r') as kaart: #text file met map-data (muren etc)
-            for line in kaart:
-                self.kaartdata.append(line)
+        self.kaart = Map('Kaart2.txt')
     
     def new(self):
         #start nieuwe game
         self.walls = []
-        for rij, tiles in enumerate(self.kaartdata): #genereer y-coordinaat en tegels van bijhorende rij
+        for rij, tiles in enumerate(self.kaart.data): #genereer y-coordinaat en tegels van bijhorende rij
             for kolom, tile in enumerate(tiles): #genereer x-coordinaat van individuele tegels
                 if tile =='1':
                     wall = Wall(self,kolom,rij)
@@ -37,6 +34,7 @@ class Game:
                 if tile == 'P':
                     self.player = Player(self,kolom,rij,GEEL) #werkt met squares als coord. , niet met pixels
                     entitylijst.append(self.player)
+        self.camera = Camera(self.kaart.width,self.kaart.height)
 
                     
     def run(self):
@@ -52,6 +50,7 @@ class Game:
         #update game loop
         for entity in entitylijst:
             entity.update()
+        self.camera.update(self.player)
 
     def events(self):
         #events binnen game loop
@@ -74,7 +73,7 @@ class Game:
         self.screen.fill(ACHTERGRONDKLEUR)
         self.teken_grid()
         for entity in entitylijst:
-            entity.draw()
+            self.screen.blit(entity.image, self.camera.apply(entity)) #apply de relative coord. gegenereerd door de camera op het tekenen van alle entities (past werkelijk pos. niet aan)
         #altijd laatste line van renderen
         pg.display.flip() 
 
