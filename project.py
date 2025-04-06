@@ -1,3 +1,4 @@
+#gevolgde tutotials via https://www.youtube.com/watch?v=3UxnelT9aCo&list=PLsk-HSGFjnaGQq7ybM8Lgkh5EMxUWPm2i
 #tips voor elkaar:
 #om alle instances van een bepaalde term te selecteren en tegelijk te kunnen veranderen, selecteer woord en druk op ctrl+shift+L
 #in pg.ingebouwde sprite basisklasse mag niet gebruitkt worden
@@ -18,19 +19,26 @@ class Game:
         pg.key.set_repeat(30,100)
         self.running = True
     
+    def load_data(self):
+        self.kaartdata = []
+        with open('Kaart.txt','r') as kaart: #text file met map-data (muren etc)
+            for line in kaart:
+                self.kaartdata.append(line)
+    
     def new(self):
         #start nieuwe game
-        self.player = Player(self,10,10,GEEL) #werkt met squares als coord. , niet met pixels
         self.walls = []
-        entitylijst.append(self.player)
-        for x in range(10,20):
-            wall = Wall(self,x,5)
-            self.walls.append(wall) #maak hier later een apparte functie/whatever van die entitylijst afgaat voor alle muur-class enities in deze in self.walls zet
-            entitylijst.append(wall)
-        
+        for rij, tiles in enumerate(self.kaartdata): #genereer y-coordinaat en tegels van bijhorende rij
+            for kolom, tile in enumerate(tiles): #genereer x-coordinaat van individuele tegels
+                if tile =='1':
+                    wall = Wall(self,kolom,rij)
+                    self.walls.append(wall) #maak hier later een apparte functie/whatever van die entitylijst afgaat voor alle muur-class enities in deze in self.walls zet
+                    entitylijst.append(wall)
+                if tile == 'P':
+                    self.player = Player(self,kolom,rij,GEEL) #werkt met squares als coord. , niet met pixels
+                    entitylijst.append(self.player)
 
-
-
+                    
     def run(self):
         # game loop
         self.playing = True
@@ -91,8 +99,8 @@ class Game:
 game = Game()
 game.toon_startscherm()
 while game.running:
+    game.load_data()
     game.new()
     game.run()
     game.game_over()
-
 pg.quit()
