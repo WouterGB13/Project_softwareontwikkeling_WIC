@@ -12,8 +12,6 @@ class Player():
         self.kleur = kleur
 
     def move(self, dx=0, dy=0): #beweging met standaardhoeveelheid 0 zodat er standaard geen beweging is
-        print((not self.collide_with_walls(dx,dy)))
-        print(self.x,self.y)
         if not self.collide_with_walls(dx,dy):
             self.x += dx
             self.y += dy

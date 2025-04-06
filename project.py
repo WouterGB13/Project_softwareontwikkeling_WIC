@@ -25,7 +25,7 @@ class Game:
         entitylijst.append(self.player)
         for x in range(10,20):
             wall = Wall(self,x,5)
-            self.walls.append(wall)
+            self.walls.append(wall) #maak hier later een apparte functie/whatever van die entitylijst afgaat voor alle muur-class enities in deze in self.walls zet
             entitylijst.append(wall)
         
 
