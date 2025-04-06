@@ -21,10 +21,14 @@ class Game:
     def new(self):
         #start nieuwe game
         self.player = Player(self,10,10,GEEL) #werkt met squares als coord. , niet met pixels
+        self.walls = []
         entitylijst.append(self.player)
         for x in range(10,20):
             wall = Wall(self,x,5)
+            self.walls.append(wall)
             entitylijst.append(wall)
+        
+
 
 
     def run(self):
