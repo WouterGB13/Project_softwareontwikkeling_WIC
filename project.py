@@ -43,7 +43,7 @@ class Game:
         # game loop
         self.playing = True
         while self.playing:
-            self.clock.tick(FPS)
+            self.dt = self.clock.tick(FPS) / 1000
             self.events()
             self.update()
             self.draw()
@@ -60,18 +60,6 @@ class Game:
             if event.type == pg.QUIT:
                 self.playing = False
                 self.running = False
-            #check key-inputs
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_ESCAPE:
-                    pg.quit()
-                if event.key == pg.K_q:
-                    self.player.move(dx=-1)
-                if event.key == pg.K_d:
-                    self.player.move(dx=1)
-                if event.key == pg.K_z:
-                    self.player.move(dy=-1)
-                if event.key == pg.K_s:
-                    self.player.move(dy=1)
     
     def teken_grid(self):
         for x in range(0, BREEDTE, TILESIZE):
