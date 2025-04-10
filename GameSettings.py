@@ -1,11 +1,12 @@
-#Game opties en settings
-TITEL = "METAL GEAR SOLID V(UB): THE PHANTOM KATER"  
-#zorg dat hoogte en breedte deelbaar zijn door TILESIZE
-BREEDTE = 1024 
-HOOGTE = 768
-FPS = 60
+# Game opties en instellingen
+TITEL = "METAL GEAR SOLID V(UB): THE PHANTOM KATER"  # Titel van het spelvenster
 
-#definieer nuttige kleuren
+# Zorg dat de afmetingen deelbaar zijn door TILESIZE voor een netjes grid
+BREEDTE = 1024  # Schermbreedte in pixels (bijv. 32 * 32)
+HOOGTE = 768    # Schermhoogte in pixels (bijv. 24 * 32)
+FPS = 60        # Frames per seconde (hoe vaak het scherm wordt ververst)
+
+# Definities van handige RGB-kleuren
 WIT = (255,255,255)
 ZWART = (0,0,0)
 ROOD = (255,0,0)
@@ -15,11 +16,11 @@ DONKERGRIJS = (40,40,40)
 LICHTGRIJS = (100,100,100)
 GEEL = (255,255,0)
 
-ACHTERGRONDKLEUR = DONKERGRIJS 
+ACHTERGRONDKLEUR = DONKERGRIJS  # Achtergrondkleur van het spel
 
-TILESIZE = 32 #macht van 2
-GRIDBREEDTE = BREEDTE/TILESIZE
-GRIDHOOGTE = HOOGTE/TILESIZE
+TILESIZE = 32  # Grootte van één tegel (vierkant) in pixels; bij voorkeur een macht van 2
+GRIDBREEDTE = BREEDTE/TILESIZE  # Aantal tegels horizontaal
+GRIDHOOGTE = HOOGTE/TILESIZE    # Aantal tegels verticaal
 
-#settings voor speler
-SPELER_SNELHEID = 300
+# Instellingen voor de speler
+SPELER_SNELHEID = 300  # Snelheid waarmee de speler beweegt (pixels per seconde)
