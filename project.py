@@ -20,7 +20,7 @@ class Game:
         self.running = True
     
     def load_data(self):
-        self.kaart = Map('Kaart2.txt')
+        self.kaart = Map('Github-shit\Project_softwareontwikkeling_WIC\Kaart2.txt')
     
     def new(self):
         #start nieuwe game
@@ -32,7 +32,7 @@ class Game:
                     self.walls.append(wall) #maak hier later een apparte functie/whatever van die entitylijst afgaat voor alle muur-class enities in deze in self.walls zet
                     entitylijst.append(wall)
                 if tile == 'P':
-                    self.player = Player(self,kolom,rij,GEEL) #werkt met squares als coord. , niet met pixels
+                    self.player = Player2(self,kolom,rij,GEEL) #werkt met squares als coord. , niet met pixels
                     entitylijst.append(self.player)
         self.camera = Camera(self.kaart.width,self.kaart.height)
 
