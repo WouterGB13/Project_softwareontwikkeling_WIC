@@ -1,89 +1,92 @@
-#gevolgde tutotials via https://www.youtube.com/watch?v=3UxnelT9aCo&list=PLsk-HSGFjnaGQq7ybM8Lgkh5EMxUWPm2i
-#tips voor elkaar:
-#om alle instances van een bepaalde term te selecteren en tegelijk te kunnen veranderen, selecteer woord en druk op ctrl+shift+L
-#in pg.ingebouwde sprite basisklasse mag niet gebruitkt worden
-#save altijd een file na het aanmaken van een nieuwe klasse, ander krijg je "niet defined" error bij het starten van programma
+# Gevolgde tutorials via: https://www.youtube.com/watch?v=3UxnelT9aCo&list=PLsk-HSGFjnaGQq7ybM8Lgkh5EMxUWPm2i
+# Tips voor elkaar:
+# - Ctrl+Shift+L = meerdere selecties tegelijk bewerken
+# - Gebruik NIET de ingebouwde pg.sprite.Sprite klas
+# - Sla bestanden op na het aanmaken van klassen om "not defined" errors te vermijden
 
 import pygame as pg
-from GameSettings import * #importeer alle setting zonder steeds GameSettings."setting" te moeten typen
-from entities import *
-from map_en_camera import *
+from GameSettings import *  # Importeer alle game instellingen
+from entities import *       # Speler en muurklassen
+from map_en_camera import *  # Map (tilemap) en camera logica
 
+# Hoofdklasse van het spel
 class Game:
     def __init__(self):
-        # startup van game window, etc 
+        # Start game window, klok, display
         pg.init()
-        #pg.mixer.init() #initieert geluidsfunctie van pg.(niet gebruikt in project)
-        self.screen = pg.display.set_mode((BREEDTE,HOOGTE))
-        pg.display.set_caption(TITEL)
-        self.clock = pg.time.Clock()
-        self.running = True
-    
+        # pg.mixer.init() is uitgeschakeld want geen geluid in dit project
+        self.screen = pg.display.set_mode((BREEDTE,HOOGTE))  # Schermgrootte
+        pg.display.set_caption(TITEL)  # Titel van spelvenster
+        self.clock = pg.time.Clock()   # Tijdbeheer voor FPS
+        self.running = True            # Game actief
+
+    # Laad kaartgegevens (uit tekstbestand)
     def load_data(self):
         self.kaart = Map('Github-shit\Project_softwareontwikkeling_WIC\Kaart2.txt')
     
     def new(self):
-        #start nieuwe game
-        self.walls = []
-        for rij, tiles in enumerate(self.kaart.data): #genereer y-coordinaat en tegels van bijhorende rij
-            for kolom, tile in enumerate(tiles): #genereer x-coordinaat van individuele tegels
-                if tile =='1':
-                    wall = Wall(self,kolom,rij)
-                    self.walls.append(wall) #maak hier later een apparte functie/whatever van die entitylijst afgaat voor alle muur-class enities in deze in self.walls zet
-                    entitylijst.append(wall)
-                if tile == 'P':
-                    self.player = Player2(self,kolom,rij,GEEL) #werkt met squares als coord. , niet met pixels
+        # Start nieuwe game-ronde
+        self.walls = []  # Reset muurlijst
+        # Loop door elke rij en tegel in de kaart
+        for rij, tiles in enumerate(self.kaart.data):
+            for kolom, tile in enumerate(tiles):
+                if tile == '1':  # Muur-tegel
+                    wall = Wall(self, kolom, rij)
+                    self.walls.append(wall)
+                    entitylijst.append(wall)  # Voeg toe aan globale entitylijst
+                if tile == 'P':  # Spelerpositie
+                    self.player = Player(self, kolom, rij, GEEL)
                     entitylijst.append(self.player)
-        self.camera = Camera(self.kaart.width,self.kaart.height)
+        # Camera volgt speler, ingesteld op mapgrootte
+        self.camera = Camera(self.kaart.width, self.kaart.height)
 
-                    
     def run(self):
-        # game loop
+        # Hoofd gameloop
         self.playing = True
         while self.playing:
-            self.dt = self.clock.tick(FPS) / 1000
-            self.events()
-            self.update()
-            self.draw()
-    
+            self.dt = self.clock.tick(FPS) / 1000  # Delta time (tijd tussen frames)
+            self.events()  # Input
+            self.update()  # Logica
+            self.draw()    # Beeld
+
     def update(self):
-        #update game loop
+        # Update alle entities en camera
         for entity in entitylijst:
             entity.update()
-        self.camera.update(self.player)
+        self.camera.update(self.player)  # Camera volgt speler
 
     def events(self):
-        #events binnen game loop
+        # Verwerk user input (zoals sluiten van venster)
         for event in pg.event.get():
-            #check voor game afsluiten met X van de gamewindow
             if event.type == pg.QUIT:
                 self.playing = False
                 self.running = False
 
-    
     def teken_grid(self):
+        # Tekent hulplijnen over het scherm
         for x in range(0, BREEDTE, TILESIZE):
             pg.draw.line(self.screen, LICHTGRIJS, (x,0) , (x,HOOGTE), 1)
         for y in range(0, HOOGTE, TILESIZE):
             pg.draw.line(self.screen, LICHTGRIJS, (0,y) , (BREEDTE,y), 1)
-                
 
     def draw(self):
-        # teken frame
-        self.screen.fill(ACHTERGRONDKLEUR)
-        self.teken_grid()
+        # Render het scherm
+        self.screen.fill(ACHTERGRONDKLEUR)  # Achtergrondkleur
+        self.teken_grid()  # Grid tekenen
         for entity in entitylijst:
-            self.screen.blit(entity.image, self.camera.apply(entity)) #apply de relative coord. gegenereerd door de camera op het tekenen van alle entities (past werkelijk pos. niet aan)
-        #altijd laatste line van renderen
-        pg.display.flip() 
+            # Tekent elke entity op scherm met camera-offset toegepast
+            self.screen.blit(entity.image, self.camera.apply(entity))
+        pg.display.flip()  # Vernieuw het scherm
 
     def toon_startscherm(self):
+        # (Placeholder) startscherm logica
         pass
 
     def game_over(self):
+        # (Placeholder) game over logica
         pass
 
-#uit te voeren code
+# Start het spel
 game = Game()
 game.toon_startscherm()
 while game.running:
@@ -91,4 +94,4 @@ while game.running:
     game.new()
     game.run()
     game.game_over()
-pg.quit()
+pg.quit()  # Sluit pygame correct af
