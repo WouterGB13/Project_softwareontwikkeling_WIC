@@ -114,18 +114,21 @@ class Guard():
     def navigate(self,start,end): #gebruiken om snelheid juist te oriënteren
         self.vx = GUARD_SNELHEID*(((end[0]*TILESIZE)-(start[0]*TILESIZE))/math.sqrt(((end[0]*TILESIZE-start[0]*TILESIZE)**2)+((end[1]*TILESIZE-start[1]*TILESIZE)**2))) #goniometrie uitgeschreven als bewerking
         self.vy = GUARD_SNELHEID*(((end[1]*TILESIZE)-(start[1]*TILESIZE))/math.sqrt(((end[0]*TILESIZE-start[0]*TILESIZE)**2)+((end[1]*TILESIZE-start[1]*TILESIZE)**2))) #idem maar voor y snelheid
-        print(start, end,self.vx,self.vy)
+        #print(start, end,self.vx,self.vy)
 
     # Wordt op dit moment niet gebruikt, maar kan later uitgebreid worden
     def update(self):
         if not ((self.next_pos[0]*TILESIZE - 3 <=self.x <= self.next_pos[0]*TILESIZE + 3) and (self.next_pos[1]*TILESIZE - 3 <=self.y <= self.next_pos[1]*TILESIZE + 3)): #wanneer niet binnen bepaalde marge van doel, navigeer naar doel
             self.navigate(self.current_route_pos,self.next_pos)
-            print(self.x,self.next_pos[0]*TILESIZE,self.y, self.next_pos[1]*TILESIZE )
+            #print(self.x,self.next_pos[0]*TILESIZE,self.y, self.next_pos[1]*TILESIZE)
         else:
             self.vx = 0
             self.x = self.next_pos[0]*TILESIZE
             self.vy = 0
             self.y = self.next_pos[1]*TILESIZE
+            self.checkpoint = (self.checkpoint+1)%len(self.route)
+            self.current_route_pos = self.next_pos
+            self.next_pos = self.route[(self.checkpoint+1)%len(self.route)]
         self.x += self.vx * self.game.dt
         self.rect.x = self.x
         self.y += self.vy * self.game.dt

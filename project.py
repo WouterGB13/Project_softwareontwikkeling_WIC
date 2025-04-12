@@ -23,9 +23,8 @@ class Game:
     # Laad kaartgegevens (uit tekstbestand)
     def load_data(self):
         self.kaart = Map('Github-shit\Project_softwareontwikkeling_WIC\Kaart2.txt')
-    
-        self.kaart = Map('Kaart2.txt')
-        with open("Guards.txt", 'r') as Guards:
+
+        with open("Github-shit\Project_softwareontwikkeling_WIC\Guards.txt", 'r') as Guards:
             for Guard_var in Guards: #guard_var om te onderscheiden van de class maar leesbaarheid te behouden
                 temp_route = Guard_var.strip().split(';')
                 route = []
