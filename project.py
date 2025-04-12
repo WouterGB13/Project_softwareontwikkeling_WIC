@@ -35,7 +35,6 @@ class Game:
                         new_pair.append(element)
                     route.append(new_pair)
                 self.guard = Guard(self, x = route[0][0], y = route[0][1], route = route)
-                print(self.guard.x, self.guard.y)
                 entitylijst.append(self.guard)
 
         

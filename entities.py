@@ -95,15 +95,38 @@ class Wall():
 class Guard():
     def __init__(self,game,x,y,route): 
         self.game = game
+        self.checkpoint = 0
         self.image = pg.Surface((TILESIZE,TILESIZE))  
         self.image.fill(ROOD)  # Geef de guard een kleur
         self.rect = self.image.get_rect()  # hitbox rechthoek
-        self.x = x
-        self.y = y
-        self.rect.x = x * TILESIZE  # zet guard op juiste X-positie in pixels
-        self.rect.y = y * TILESIZE  # zet guard op juiste Y-positie in pixels
+        self.vx = 0
+        self.vy = 0
+        self.x = x * TILESIZE  # zet guard op juiste X-positie in pixels
+        self.y = y * TILESIZE  # zet guard op juiste Y-positie in pixels
+        self.rect.x = self.x
+        self.rect.y = self.y
         self.route = route #route is lijst met coordinaten in
+        self.currentpos = route[self.checkpoint]
+        self.current_route_pos = self.currentpos
+        self.next_patrol_pos = route[self.checkpoint+1]
+        self.next_pos = self.next_patrol_pos #2 variabelen gebruiken om af te kunnen wijken van pad om speler te achtervolgen en toch nog te weten waar in patrouille hij zit
+
+    def navigate(self,start,end): #gebruiken om snelheid juist te oriënteren
+        self.vx = GUARD_SNELHEID*(((end[0]*TILESIZE)-(start[0]*TILESIZE))/math.sqrt(((end[0]*TILESIZE-start[0]*TILESIZE)**2)+((end[1]*TILESIZE-start[1]*TILESIZE)**2))) #goniometrie uitgeschreven als bewerking
+        self.vy = GUARD_SNELHEID*(((end[1]*TILESIZE)-(start[1]*TILESIZE))/math.sqrt(((end[0]*TILESIZE-start[0]*TILESIZE)**2)+((end[1]*TILESIZE-start[1]*TILESIZE)**2))) #idem maar voor y snelheid
+        print(start, end,self.vx,self.vy)
 
     # Wordt op dit moment niet gebruikt, maar kan later uitgebreid worden
     def update(self):
-        pass
+        if not ((self.next_pos[0]*TILESIZE - 3 <=self.x <= self.next_pos[0]*TILESIZE + 3) and (self.next_pos[1]*TILESIZE - 3 <=self.y <= self.next_pos[1]*TILESIZE + 3)): #wanneer niet binnen bepaalde marge van doel, navigeer naar doel
+            self.navigate(self.current_route_pos,self.next_pos)
+            print(self.x,self.next_pos[0]*TILESIZE,self.y, self.next_pos[1]*TILESIZE )
+        else:
+            self.vx = 0
+            self.x = self.next_pos[0]*TILESIZE
+            self.vy = 0
+            self.y = self.next_pos[1]*TILESIZE
+        self.x += self.vx * self.game.dt
+        self.rect.x = self.x
+        self.y += self.vy * self.game.dt
+        self.rect.y = self.y
