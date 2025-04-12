@@ -24,6 +24,24 @@ class Game:
     def load_data(self):
         self.kaart = Map('Github-shit\Project_softwareontwikkeling_WIC\Kaart2.txt')
     
+        self.kaart = Map('Kaart2.txt')
+        with open("Guards.txt", 'r') as Guards:
+            for Guard_var in Guards: #guard_var om te onderscheiden van de class maar leesbaarheid te behouden
+                temp_route = Guard_var.strip().split(';')
+                route = []
+                for pair in temp_route: #coordinaten omzetten van string naar x,y-paren
+                    pair = pair.split(',')
+                    new_pair = []
+                    for element in pair:
+                        element = int(element)
+                        new_pair.append(element)
+                    route.append(new_pair)
+                self.guard = Guard(self, x = route[0][0], y = route[0][1], route = route)
+                entitylijst.append(self.guard)
+
+        
+            
+
     def new(self):
         # Start nieuwe game-ronde
         self.walls = []  # Reset muurlijst
