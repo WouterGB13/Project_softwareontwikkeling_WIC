@@ -76,6 +76,7 @@ class Player():
 
 # Klasse voor muren
 class Wall():
+
     def __init__(self, game, x, y):  # geen kleurargument want alle muren zijn groen
         self.game = game
         self.kleur = GROEN
@@ -90,3 +91,15 @@ class Wall():
     # Wordt op dit moment niet gebruikt, maar kan later uitgebreid worden
     def update(self):
         pass
+
+class Guard():
+    def __init__(self,game,x,y,route): 
+        self.game = game
+        self.image = pg.Surface((TILESIZE,TILESIZE))  # Spelerafbeelding van TILESIZE x TILESIZE
+        self.image.fill(ROOD)  # Geef de speler een kleur
+        self.vx = 0  # horizontale snelheid
+        self.vy = 0  # verticale snelheid
+        self.rect = self.image.get_rect()  # hitbox rechthoek
+        self.x = x * TILESIZE  # zet speler op juiste X-positie in pixels
+        self.y = y * TILESIZE  # zet speler op juiste Y-positie in pixels
+        self.route = route
