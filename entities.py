@@ -95,11 +95,15 @@ class Wall():
 class Guard():
     def __init__(self,game,x,y,route): 
         self.game = game
-        self.image = pg.Surface((TILESIZE,TILESIZE))  # Spelerafbeelding van TILESIZE x TILESIZE
-        self.image.fill(ROOD)  # Geef de speler een kleur
-        self.vx = 0  # horizontale snelheid
-        self.vy = 0  # verticale snelheid
+        self.image = pg.Surface((TILESIZE,TILESIZE))  
+        self.image.fill(ROOD)  # Geef de guard een kleur
         self.rect = self.image.get_rect()  # hitbox rechthoek
-        self.x = x * TILESIZE  # zet speler op juiste X-positie in pixels
-        self.y = y * TILESIZE  # zet speler op juiste Y-positie in pixels
-        self.route = route
+        self.x = x
+        self.y = y
+        self.rect.x = x * TILESIZE  # zet guard op juiste X-positie in pixels
+        self.rect.y = y * TILESIZE  # zet guard op juiste Y-positie in pixels
+        self.route = route #route is lijst met coordinaten in
+
+    # Wordt op dit moment niet gebruikt, maar kan later uitgebreid worden
+    def update(self):
+        pass
