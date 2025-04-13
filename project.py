@@ -1,4 +1,5 @@
 # Gevolgde tutorials via: https://www.youtube.com/watch?v=3UxnelT9aCo&list=PLsk-HSGFjnaGQq7ybM8Lgkh5EMxUWPm2i
+# heb niet te veel tabs open, game lagt hiervan en dit helpt de guard-pathing omzeep
 # Tips voor elkaar:
 # - Ctrl+Shift+L = meerdere selecties tegelijk bewerken
 # - Gebruik NIET de ingebouwde pg.sprite.Sprite klas
@@ -22,24 +23,21 @@ class Game:
 
     # Laad kaartgegevens (uit tekstbestand)
     def load_data(self):
-        self.kaart = Map('Github-shit\Project_softwareontwikkeling_WIC\Kaart2.txt')
+        self.kaart = Map('Kaart2.txt')
 
-        with open("Github-shit\Project_softwareontwikkeling_WIC\Guards.txt", 'r') as Guards:
+        with open("Guards.txt", 'r') as Guards:
             for Guard_var in Guards: #guard_var om te onderscheiden van de class maar leesbaarheid te behouden
-                temp_route = Guard_var.strip().split(';')
+                temp_route = Guard_var.strip().split(';') #verwijder onzichtbare endline karakters en split in coordinatenparen (strings)
                 route = []
                 for pair in temp_route: #coordinaten omzetten van string naar x,y-paren
-                    pair = pair.split(',')
+                    pair = pair.split(',') #x en y-coordinaat van elkaar scheiden (nu 2 strings die bestaan uit 1 nummer elk)
                     new_pair = []
                     for element in pair:
-                        element = int(element)
+                        element = int(element) #string omzetten in integer om samen te voegen als bruikbaar coordinatenpaar
                         new_pair.append(element)
-                    route.append(new_pair)
-                self.guard = Guard(self, x = route[0][0], y = route[0][1], route = route)
-                entitylijst.append(self.guard)
-
-        
-            
+                    route.append(new_pair) #voeg niet-string coordinatenset toe aan route
+                self.guard = Guard(self, x = route[0][0], y = route[0][1], route = route) #maak guard aan met gegenereerde route
+                entitylijst.append(self.guard) #registreer guard als bestaande entity
 
     def new(self):
         # Start nieuwe game-ronde
@@ -69,8 +67,8 @@ class Game:
     def update(self):
         # Update alle entities en camera
         for entity in entitylijst:
-            entity.update()
-        self.camera.update(self.player)  # Camera volgt speler
+            entity.update() #inhoud van .update() is niet universeel
+        self.camera.update(self.player)  # Camerapositie gelijkstellen aan spelerpositie
 
     def events(self):
         # Verwerk user input (zoals sluiten van venster)

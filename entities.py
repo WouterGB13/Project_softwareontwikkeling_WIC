@@ -38,9 +38,9 @@ class Player():
 
     # Check voor botsingen met muren
     def object_collision(self):
-        collisionlist = []
-        for wall in self.game.walls:
-            if self.rect.colliderect(wall.rect):
+        collisionlist = [] #dient om meerdere botsingen tegelijk te kunnen registeren, ander ontstaan clipping problemen
+        for wall in self.game.walls: 
+            if self.rect.colliderect(wall.rect): #check voor elke muur of hitbox van speler en muur overlappen, zo ja, voeg collision toe aan lijst
                 collisionlist.append(wall)
         return collisionlist
 
@@ -48,7 +48,7 @@ class Player():
     def collide_with_walls(self, dir):
         hits = self.object_collision()
         for wall in hits:
-            if dir == 'x':
+            if dir == 'x': #richtingsgebonden collisions zorgen ervoor dat je niet tot full stop komt als je een muur raakt
                 if self.vx > 0:  # beweeg naar rechts
                     self.x = wall.rect.left - self.rect.width
                 elif self.vx < 0:  # beweeg naar links
@@ -67,7 +67,7 @@ class Player():
     # Update spelerpositie en verwerk botsingen
     def update(self):
         self.get_keys()
-        self.x += self.vx * self.game.dt
+        self.x += self.vx * self.game.dt 
         self.y += self.vy * self.game.dt
         self.rect.x = self.x
         self.collide_with_walls('x')
@@ -92,7 +92,7 @@ class Wall():
     def update(self):
         pass
 
-class Guard():
+class Guard(): #gebruik in .txt file volgende notatie om een nieuwe route aan te maken: x-coord,y-coord;volgende x, volgende y;...
     def __init__(self,game,x,y,route): 
         self.game = game
         self.checkpoint = 0
@@ -114,22 +114,21 @@ class Guard():
     def navigate(self,start,end): #gebruiken om snelheid juist te oriënteren
         self.vx = GUARD_SNELHEID*(((end[0]*TILESIZE)-(start[0]*TILESIZE))/math.sqrt(((end[0]*TILESIZE-start[0]*TILESIZE)**2)+((end[1]*TILESIZE-start[1]*TILESIZE)**2))) #goniometrie uitgeschreven als bewerking
         self.vy = GUARD_SNELHEID*(((end[1]*TILESIZE)-(start[1]*TILESIZE))/math.sqrt(((end[0]*TILESIZE-start[0]*TILESIZE)**2)+((end[1]*TILESIZE-start[1]*TILESIZE)**2))) #idem maar voor y snelheid
-        #print(start, end,self.vx,self.vy)
+        #print(start, end,self.vx,self.vy) #debugging
 
-    # Wordt op dit moment niet gebruikt, maar kan later uitgebreid worden
     def update(self):
         if not ((self.next_pos[0]*TILESIZE - 3 <=self.x <= self.next_pos[0]*TILESIZE + 3) and (self.next_pos[1]*TILESIZE - 3 <=self.y <= self.next_pos[1]*TILESIZE + 3)): #wanneer niet binnen bepaalde marge van doel, navigeer naar doel
             self.navigate(self.current_route_pos,self.next_pos)
-            #print(self.x,self.next_pos[0]*TILESIZE,self.y, self.next_pos[1]*TILESIZE)
-        else:
-            self.vx = 0
+            #print(self.x,self.next_pos[0]*TILESIZE,self.y, self.next_pos[1]*TILESIZE) #debugging
+        else: #wanneer dicht genoeg bij doel, zet locatie gelijk aan doellokatie (compenseert voor marge in bovenstaande if)
+            self.vx = 0 #stop beweging
             self.x = self.next_pos[0]*TILESIZE
             self.vy = 0
             self.y = self.next_pos[1]*TILESIZE
-            self.checkpoint = (self.checkpoint+1)%len(self.route)
-            self.current_route_pos = self.next_pos
+            self.checkpoint = (self.checkpoint+1)%len(self.route) #ga naar volgende checkpoint, modulus dient om terug naar eerste checkpoint te gaan na voltooien van loop
+            self.current_route_pos = self.next_pos 
             self.next_pos = self.route[(self.checkpoint+1)%len(self.route)]
-        self.x += self.vx * self.game.dt
-        self.rect.x = self.x
+        self.x += self.vx * self.game.dt #beweging
+        self.rect.x = self.x 
         self.y += self.vy * self.game.dt
         self.rect.y = self.y

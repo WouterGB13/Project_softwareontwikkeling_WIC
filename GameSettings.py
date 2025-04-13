@@ -26,4 +26,4 @@ GRIDHOOGTE = HOOGTE/TILESIZE    # Aantal tegels verticaal
 SPELER_SNELHEID = 300  # Snelheid waarmee de speler beweegt (pixels per seconde)
 
 #instellingen voor guards
-GUARD_SNELHEID = 350
+GUARD_SNELHEID = 200
