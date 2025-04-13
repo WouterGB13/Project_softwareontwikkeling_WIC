@@ -11,7 +11,7 @@ class Map:
         # Lees de kaartregels (bijv. muren/spelerposities) uit een tekstbestand
         with open(filename,'r') as kaart:
             for line in kaart:
-                self.data.append(line.strip())  # verwijder \n aan het einde van elke regel
+                self.data.append(line.strip())  # verwijder onzichtbare \n aan het einde van elke regel (zorgt anders voor extra rij van map)
 
         # Breedte van de kaart in tegels
         self.tilewidth = len(self.data[0])
@@ -23,7 +23,7 @@ class Map:
 
 # Klasse voor het volgen van een entity met de camera
 class Camera:
-    def __init__(self, breedte, hoogte):  # camera wordt even groot als de wereld
+    def __init__(self, breedte, hoogte):  # grootte van weergeven deel meegeven
         self.camera = pg.Rect(0,0, breedte, hoogte)  # rechthoek die bepaalt welk deel zichtbaar is
         self.breedte = breedte
         self.hoogte = hoogte
@@ -38,7 +38,7 @@ class Camera:
         x = -target.rect.x + int(BREEDTE/2)
         y = -target.rect.y + int(HOOGTE/2)
 
-        # Beperk camera zodat deze niet buiten de wereld beweegt
+        # Beperk camera zodat deze niet buiten de map beweegt
         x = min(0,x)  # links
         y = min(0,y)  # boven
         x = max(-(self.breedte - BREEDTE),x)  # rechts
