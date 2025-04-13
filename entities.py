@@ -1,6 +1,7 @@
 import pygame as pg
 from GameSettings import *
 import math
+vec = pg.math.Vector2
 
 entitylijst = []
 
@@ -92,7 +93,7 @@ class Wall():
     def update(self):
         pass
 
-class Guard():
+class Guard0():
     def __init__(self,game,x,y,route): 
         self.game = game
         self.checkpoint = 0
@@ -117,10 +118,15 @@ class Guard():
         #print(start, end,self.vx,self.vy)
 
     # Wordt op dit moment niet gebruikt, maar kan later uitgebreid worden
+    def bot_at_checkpoint(self):
+        if (self.next_pos[0]*TILESIZE - 3 <=self.x <= self.next_pos[0]*TILESIZE + 3) and (self.next_pos[1]*TILESIZE - 3 <=self.y <= self.next_pos[1]*TILESIZE + 3): #wanneer niet binnen bepaalde marge van doel, navigeer naar doel
+            return True
+        else:
+            return False
+        
     def update(self):
-        if not ((self.next_pos[0]*TILESIZE - 3 <=self.x <= self.next_pos[0]*TILESIZE + 3) and (self.next_pos[1]*TILESIZE - 3 <=self.y <= self.next_pos[1]*TILESIZE + 3)): #wanneer niet binnen bepaalde marge van doel, navigeer naar doel
+        if not self.bot_at_checkpoint(): #wanneer niet binnen bepaalde marge van doel, navigeer naar doel
             self.navigate(self.current_route_pos,self.next_pos)
-            #print(self.x,self.next_pos[0]*TILESIZE,self.y, self.next_pos[1]*TILESIZE)
         else:
             self.vx = 0
             self.x = self.next_pos[0]*TILESIZE
@@ -133,3 +139,56 @@ class Guard():
         self.rect.x = self.x
         self.y += self.vy * self.game.dt
         self.rect.y = self.y
+
+
+class Guard(Guard0): #toevoegen van werken met vectoren/ een richting
+    def __init__(self, game, x, y, route):
+        self.game = game
+        self.checkpoint = 0
+        self.route = route
+        self.currentpos = route[self.checkpoint]
+        self.current_route_pos = self.currentpos
+        self.next_patrol_pos = route[self.checkpoint+1]
+        self.next_pos = self.next_patrol_pos
+        self.image = pg.Surface((TILESIZE,TILESIZE))
+        self.image.fill(ROOD)
+        self.rect = self.image.get_rect()
+        self.vel = vec(0, 0)
+        self.x = x
+        self.y = y
+        self.pos = vec(x, y) * TILESIZE
+        self.rot = 0 #in ° dus geen radialen
+
+    def navigate(self, start, end):
+        dx, dy = abs(start[0] - end[0]), abs(start[1] - end[1])
+        if dx == 0:
+            self.rot = 90 if (start[1] - end[1]) > 0 else 270
+            print(start[1] - end[1])
+        else:
+            self.rot = math.atan(dy/dx)*360/(2*math.pi)
+        #if start[0]-end[0] > 0:
+         #   self.rot += 180
+            #print(start[0]-end[0])
+#        print(self.rot)
+
+
+    def drawfront(self):
+        self.front_point = self.rect.center + vec(1, 0).rotate(-self.rot)
+        pg.draw.circle(self.game.screen, ZWART, self.front_point, 3)
+
+    def update(self):
+        if not self.bot_at_checkpoint():
+            self.navigate([self.pos[0]/TILESIZE, self.pos[1]/TILESIZE], self.next_pos)
+
+        else:
+            print("nice :)")
+            self.vel = vec(0, 0)
+            self.pos = vec(self.next_pos[0], self.next_pos[1])*TILESIZE
+            self.x, self.y = self.pos
+            self.checkpoint = (self.checkpoint+1)%len(self.route)
+            self.current_route_pos = self.next_pos
+            self.next_pos = self.route[(self.checkpoint+1)%len(self.route)]
+        self.vel = vec(GUARD_SNELHEID, 0).rotate(-self.rot)
+        self.pos += self.vel*self.game.dt
+        self.x, self.y = round(self.pos[0]), round(self.pos[1])
+        self.rect.x, self.rect.y = self.pos
