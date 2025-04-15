@@ -161,34 +161,33 @@ class Guard(Guard0): #toevoegen van werken met vectoren/ een richting
         self.rot = 0 #in ° dus geen radialen
 
     def navigate(self, start, end):
-        dx, dy = abs(start[0] - end[0]), abs(start[1] - end[1])
-        if dx == 0:
-            self.rot = 90 if (start[1] - end[1]) > 0 else 270
-            print(start[1] - end[1])
+        dx, dy = abs(start[0] - end[0]), abs(start[1] - end[1]) #bepaal dx en dy tussen huidige lokatie en doel
+        if dx == 0: #vermijd delen door 0: verticaal gaan want x moet niet veranderen
+            self.rot = 90 #omhoog
         else:
-            self.rot = math.atan(dy/dx)*360/(2*math.pi)
-        #if start[0]-end[0] > 0:
-         #   self.rot += 180
-            #print(start[0]-end[0])
-#        print(self.rot)
+            self.rot = math.atan(dy/dx)*360/(2*math.pi) #bepaalt de hoek op basis van dx en dy (pas op: beeld is enkel tussen -pi/2 en pi/2; aangezien dx en dy positief zijn is het beeld nu zelfs tussen 0 en pi/2)
+        if start[0]-end[0] > 0:
+            self.rot = 180 - self.rot #neem de suplementaire hoek aka spiegel rond de y-as als dx eigenlijk kleiner is dan nul zodat we ook terug kunnen
+        if start[1]-end[1] < 0:
+            self.rot *= -1 #neem de tegengestelde hoek aka spiegel rond de x-as als dy echt groter is dan nul (pas op, de y-as wijst hier naar onder) zodat we ook terug kunnen
 
 
-    def drawfront(self):
+    def drawfront(self): #werkt niet, zou uiteindelijk al moeten aanwijzen waar de voorkant is door kleine zwarte stip
         self.front_point = self.rect.center + vec(1, 0).rotate(-self.rot)
         pg.draw.circle(self.game.screen, ZWART, self.front_point, 3)
 
     def update(self):
         if not self.bot_at_checkpoint():
             self.navigate([self.pos[0]/TILESIZE, self.pos[1]/TILESIZE], self.next_pos)
-
         else:
-            print("nice :)")
+            #print("nice :)")
             self.vel = vec(0, 0)
             self.pos = vec(self.next_pos[0], self.next_pos[1])*TILESIZE
             self.x, self.y = self.pos
             self.checkpoint = (self.checkpoint+1)%len(self.route)
             self.current_route_pos = self.next_pos
             self.next_pos = self.route[(self.checkpoint+1)%len(self.route)]
+        self.drawfront()
         self.vel = vec(GUARD_SNELHEID, 0).rotate(-self.rot)
         self.pos += self.vel*self.game.dt
         self.x, self.y = round(self.pos[0]), round(self.pos[1])
