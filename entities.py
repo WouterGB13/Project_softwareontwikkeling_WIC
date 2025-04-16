@@ -142,7 +142,7 @@ class Guard0():
         self.rect.y = self.y
 
 
-class Guard(Guard0): #toevoegen van werken met vectoren/ een richting
+class Guard1(Guard0): #toevoegen van werken met vectoren/ een richting
     def __init__(self, game, x, y, route):
         self.game = game
         self.checkpoint = 0
@@ -158,7 +158,20 @@ class Guard(Guard0): #toevoegen van werken met vectoren/ een richting
         self.x = x
         self.y = y
         self.pos = vec(x, y) * TILESIZE
+
         self.rot = 0 #in ° dus geen radialen
+        self.rot_to_player = 0
+
+    def locate_player(self): #hoek bepalen naar speler (tov van evenwijdige met x-as)
+        dx, dy = abs(self.x - self.game.player.x), abs(self.y - self.game.player.y)
+        if dx == 0:
+            self.rot_to_player = 90
+        else:
+            self.rot_to_player = math.atan(dy/dx)*360/(2*math.pi)
+        if self.x - self.game.player.x > 0:
+            self.rot_to_player = 180 - self.rot
+        if self.y - self.game.player.y < 0:
+            self.rot_to_player *= -1
 
     def navigate(self, start, end):
         dx, dy = abs(start[0] - end[0]), abs(start[1] - end[1]) #bepaal dx en dy tussen huidige lokatie en doel
@@ -172,9 +185,10 @@ class Guard(Guard0): #toevoegen van werken met vectoren/ een richting
             self.rot *= -1 #neem de tegengestelde hoek aka spiegel rond de x-as als dy echt groter is dan nul (pas op, de y-as wijst hier naar onder) zodat we ook terug kunnen
 
 
-    def drawfront(self): #werkt niet, zou uiteindelijk al moeten aanwijzen waar de voorkant is door kleine zwarte stip
-        self.front_point = self.rect.center + vec(1, 0).rotate(-self.rot)
-        pg.draw.circle(self.game.screen, ZWART, self.front_point, 3)
+    def drawfront(self): #wijst de richting aan van de guard
+        self.front_point = self.rect.center + vec(TILESIZE, 0).rotate(-self.rot)
+        self.front_point += self.game.camera.camera.topleft
+        pg.draw.circle(self.game.screen, ZWART, self.front_point , 3)
 
     def update(self):
         if not self.bot_at_checkpoint():
@@ -187,8 +201,54 @@ class Guard(Guard0): #toevoegen van werken met vectoren/ een richting
             self.checkpoint = (self.checkpoint+1)%len(self.route)
             self.current_route_pos = self.next_pos
             self.next_pos = self.route[(self.checkpoint+1)%len(self.route)]
-        self.drawfront()
         self.vel = vec(GUARD_SNELHEID, 0).rotate(-self.rot)
         self.pos += self.vel*self.game.dt
         self.x, self.y = round(self.pos[0]), round(self.pos[1])
         self.rect.x, self.rect.y = self.pos
+
+class Guard(Guard1):
+    def __init__(self, game, x, y, route):
+        self.game = game
+        self.checkpoint = 0
+        self.route = route
+        self.currentpos = route[self.checkpoint]
+        self.current_route_pos = self.currentpos
+        self.next_patrol_pos = route[self.checkpoint+1]
+        self.next_pos = self.next_patrol_pos
+        self.image = pg.Surface((TILESIZE,TILESIZE))
+        self.image.fill(ROOD)
+        self.rect = self.image.get_rect()
+        self.vel = vec(0, 0)
+        self.x = x
+        self.y = y
+        self.pos = vec(x, y) * TILESIZE
+
+        self.rot = 0 #in ° dus geen radialen
+        self.rot_to_player = 0
+
+        fases = ["patroule", "chase", "retreat"]
+        self.fase = fases[0]
+        self.vwidth = VIZIE_BREEDTE
+        self.vdist = VIEW_DIST
+
+    def locate_player(self):
+        return super().locate_player()
+    
+    def navigate(self, start, end):
+        return super().navigate(start, end)
+
+    def drawvieuwfield(self):
+        center = vec(self.rect.center) + vec(self.game.camera.camera.topleft)
+        Lline = self.rect.center + vec(self.vdist+TILESIZE/2, 0).rotate(-(self.rot+self.vwidth)) + self.game.camera.camera.topleft
+        Rline = self.rect.center + vec(self.vdist+TILESIZE/2, 0).rotate(-(self.rot-self.vwidth)) + self.game.camera.camera.topleft
+        #teken de lijntjes:
+        pg.draw.line(self.game.screen, ZWART, center, Lline)
+        pg.draw.line(self.game.screen, ZWART, center, Rline)
+
+        #teken de arc:
+        RECT = (self.x-self.vdist  + self.game.camera.camera.x, self.y-self.vdist  + self.game.camera.camera.y, 2*self.vdist+TILESIZE, 2*self.vdist+TILESIZE) #gebruik pg.draw.rect om deze te visualiseren (hieronder: staat in notitie)
+        pg.draw.arc(self.game.screen, ZWART, RECT, (self.rot - self.vwidth)/360*math.pi*2, (self.rot + self.vwidth)/360*math.pi*2, self.vdist)
+        #pg.draw.rect(self.game.screen, GROEN, RECT, 1)
+
+    def update(self):
+        return super().update()

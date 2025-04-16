@@ -23,9 +23,9 @@ class Game:
 
     # Laad kaartgegevens (uit tekstbestand)
     def load_data(self):
-        self.kaart = Map('Github-shit\Project_softwareontwikkeling_WIC\Kaart2.txt')
+        self.kaart = Map('Kaart2.txt')
 
-        with open("Github-shit\Project_softwareontwikkeling_WIC\Guards.txt", 'r') as Guards:
+        with open("Guards.txt", 'r') as Guards:
             for Guard_var in Guards: #guard_var om te onderscheiden van de class maar leesbaarheid te behouden
                 temp_route = Guard_var.strip().split(';') #verwijder onzichtbare endline karakters en split in coordinatenparen (strings)
                 route = []
@@ -91,6 +91,8 @@ class Game:
         for entity in entitylijst:
             # Tekent elke entity op scherm met camera-offset toegepast
             self.screen.blit(entity.image, self.camera.apply(entity))
+            if hasattr(entity, "drawvieuwfield"):
+                entity.drawvieuwfield()
         pg.display.flip()  # Vernieuw het scherm
 
     def toon_startscherm(self):
