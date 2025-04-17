@@ -1,60 +1,97 @@
 import pygame as pg
-from GameSettings import *
 import math
-vec = pg.math.Vector2  # 2D vectorklasse uit Pygame, handig voor richting/snelheid
+from GameSettings import *
 
-entitylijst = []  # Globale lijst met alle entiteiten in de wereld
+vec = pg.math.Vector2
 
-# Klasse voor de speler
-class Player():
-    def __init__(self,game,x,y, kleur):
+entitylijst = []
+
+class Entity:
+    # Basisklasse voor game entities
+
+    def __init__(self, game, x, y, image_path=None, color=None):
+        """
+        Initialiseer een entity
+
+        Args:
+            game: Game object
+            x: begin x-coordinaat (tile eenheid)
+            y: begin y-coordinaat (tile eenheid)
+            image_path: Pad naar het afbeeldingsbestand (optioneel).
+            color: Vulkleur voor het oppervlak (optioneel).
+        """
         self.game = game
-        self.image = pg.Surface((TILESIZE,TILESIZE))  # Vierkant oppervlak van 1 tile
-        self.image.fill(kleur)  # Kleur instellen
-        self.vx = 0  # horizontale snelheid
-        self.vy = 0  # verticale snelheid
-        self.rect = self.image.get_rect()  # Bepaal hitbox
-        self.x = x * TILESIZE  # Initiele positie in pixels
+        self.x = x * TILESIZE
         self.y = y * TILESIZE
+        self.pos = vec(self.x, self.y)  # Gebruik Vector2 voor positie
+
+        self.image = pg.Surface((TILESIZE, TILESIZE))
+        if image_path:
+            self.image = pg.image.load(image_path).convert_alpha()
+            self.image = pg.transform.scale(self.image, (TILESIZE, TILESIZE))  # schaal afbeelding
+        elif color:
+            self.image.fill(color) # Vul met opgegeven kleur
+        else:
+            self.image.fill(WIT)  # Standaard kleur als geen afbeelding of kleur is opgegeven
+
+        self.rect = self.image.get_rect(topleft=(self.x, self.y))  # Initialiseer rect met positie
+
+    def update(self):
+        # De status van de entity's bijwerken
+        self.rect.topleft = (self.x, self.y)  # De positie van het rect bijwerken op basis van x, y
+
+class Player(Entity):
+    # the player character
+
+    def __init__(self, game, x, y, kleur):
+        # De speler initialiseren
+        super().__init__(game, x, y, color=kleur)  # gebruiken Entity's init
+        self.vx = 0
+        self.vy = 0
+        self.speed = SPELER_SNELHEID
 
     def get_keys(self):
-        self.vx, self.vy = 0, 0  # Reset snelheid
-        keys  = pg.key.get_pressed()  # Lees toetsenbordinput
+        # Verwerk toetsenbordinvoer voor spelerbewegingen
+        self.vx, self.vy = 0, 0
+        keys = pg.key.get_pressed()
+
         if keys[pg.K_ESCAPE]:
             pg.quit()
             exit()
-        # Richtingsinput via QZSD en pijltjes
+
         if keys[pg.K_q] or keys[pg.K_LEFT]:
-            self.vx = -SPELER_SNELHEID
+            self.vx = -self.speed
         if keys[pg.K_d] or keys[pg.K_RIGHT]:
-            self.vx = SPELER_SNELHEID
+            self.vx = self.speed
         if keys[pg.K_z] or keys[pg.K_UP]:
-            self.vy = -SPELER_SNELHEID
+            self.vy = -self.speed
         if keys[pg.K_s] or keys[pg.K_DOWN]:
-            self.vy = SPELER_SNELHEID
-        # Diagonale snelheid normaliseren
+            self.vy = self.speed
+
         if self.vx != 0 and self.vy != 0:
-            self.vy *= math.sqrt(2)/2
-            self.vx *= math.sqrt(2)/2
+            self.vy *= math.sqrt(2) / 2
+            self.vx *= math.sqrt(2) / 2
 
     def object_collision(self):
+        # Controleren op botsingen met muren
         collisionlist = []
         for wall in self.game.walls:
-            if self.rect.colliderect(wall.rect):  # Check overlap speler <-> muur
+            if self.rect.colliderect(wall.rect):
                 collisionlist.append(wall)
         return collisionlist
 
-    def collide_with_walls(self, dir):
+    def collide_with_walls(self, direction):
+        # Botsingen met muren afhandelen
         hits = self.object_collision()
         for wall in hits:
-            if dir == 'x':
+            if direction == 'x':
                 if self.vx > 0:
                     self.x = wall.rect.left - self.rect.width
                 elif self.vx < 0:
                     self.x = wall.rect.right
                 self.vx = 0
                 self.rect.x = self.x
-            elif dir == 'y':
+            elif direction == 'y':
                 if self.vy > 0:
                     self.y = wall.rect.top - self.rect.height
                 elif self.vy < 0:
@@ -63,6 +100,7 @@ class Player():
                 self.rect.y = self.y
 
     def update(self):
+        # Spelerspositie bijwerken en botsingen afhandelen
         self.get_keys()
         self.x += self.vx * self.game.dt
         self.y += self.vy * self.game.dt
@@ -71,162 +109,149 @@ class Player():
         self.rect.y = self.y
         self.collide_with_walls('y')
 
-# Klasse voor muren
-class Wall():
+class Wall(Entity):
+    # Muur in het spel
     def __init__(self, game, x, y):
-        self.game = game
-        self.kleur = GROEN
-        self.image = pg.Surface((TILESIZE,TILESIZE))  # Standaard grootte
-        self.image.fill(self.kleur)
-        self.rect = self.image.get_rect()
-        self.x = x
-        self.y = y
-        self.rect.x = x*TILESIZE
-        self.rect.y = y*TILESIZE
+        # De muur initialiseren
+        super().__init__(game, x, y, color=GROEN)  # Use Entity's init
 
     def update(self):
-        pass  # Placeholder voor toekomstige logica
+        # De status van de muur bijwerken (doet momenteel niets)
+        pass
 
-# Eerste guard-klasse
-class Guard0():
-    def __init__(self,game,x,y,route):
-        self.game = game
-        self.checkpoint = 0
-        self.image = pg.Surface((TILESIZE,TILESIZE))
-        self.image.fill(ROOD)
-        self.rect = self.image.get_rect()
-        self.vx = 0
-        self.vy = 0
-        self.x = x * TILESIZE
-        self.y = y * TILESIZE
-        self.rect.x = self.x
-        self.rect.y = self.y
+class Guard0(Entity):
+    # Basis bewakingsklasse met eenvoudig patrouillegedrag
+
+    def __init__(self, game, x, y, route):
+        # De bewaker initialiseren
+        super().__init__(game, x, y, color=ROOD)
         self.route = route
-        self.currentpos = route[self.checkpoint]
+        self.checkpoint = 0
+        self.speed = GUARD_SNELHEID
+        self.set_next_target()
+
+    def set_next_target(self):
+        # Stel het volgende patrouilledoel in
+        self.currentpos = self.route[self.checkpoint]
         self.current_route_pos = self.currentpos
-        self.next_patrol_pos = route[self.checkpoint+1]
+        self.next_patrol_pos = self.route[(self.checkpoint + 1) % len(self.route)]
         self.next_pos = self.next_patrol_pos
 
-    def navigate(self,start,end):
-        # Richt snelheid op richting tussen start en eindpunt met goniometrie
-        self.vx = GUARD_SNELHEID*((end[0]*TILESIZE - start[0]*TILESIZE)/math.hypot(end[0]*TILESIZE - start[0]*TILESIZE, end[1]*TILESIZE - start[1]*TILESIZE))
-        self.vy = GUARD_SNELHEID*((end[1]*TILESIZE - start[1]*TILESIZE)/math.hypot(end[0]*TILESIZE - start[0]*TILESIZE, end[1]*TILESIZE - start[1]*TILESIZE))
-
-    def bot_at_checkpoint(self):
-        # Check of guard dicht genoeg bij doel is (marge = 3 pixels)
-        return (self.next_pos[0]*TILESIZE - 3 <= self.x <= self.next_pos[0]*TILESIZE + 3) and (self.next_pos[1]*TILESIZE - 3 <= self.y <= self.next_pos[1]*TILESIZE + 3)
-
-    def update(self):
-        if not self.bot_at_checkpoint():
-            self.navigate(self.current_route_pos,self.next_pos)
+    def navigate(self, start, end):
+        # Snelheid berekenen om naar het doel te bewegen
+        distance = math.hypot(end[0] * TILESIZE - start[0] * TILESIZE, end[1] * TILESIZE - start[1] * TILESIZE)
+        if distance > 0:
+            self.vx = self.speed * ((end[0] * TILESIZE - start[0] * TILESIZE) / distance)
+            self.vy = self.speed * ((end[1] * TILESIZE - start[1] * TILESIZE) / distance)
         else:
             self.vx = 0
-            self.x = self.next_pos[0]*TILESIZE
             self.vy = 0
-            self.y = self.next_pos[1]*TILESIZE
-            self.checkpoint = (self.checkpoint+1)%len(self.route)
-            self.current_route_pos = self.next_pos
-            self.next_pos = self.route[(self.checkpoint+1)%len(self.route)]
+
+    def bot_at_checkpoint(self):
+        # Controleer of de bewaker het controlepunt heeft bereikt
+        return (self.next_pos[0] * TILESIZE - 3 <= self.x <= self.next_pos[0] * TILESIZE + 3) and \
+               (self.next_pos[1] * TILESIZE - 3 <= self.y <= self.next_pos[1] * TILESIZE + 3)
+
+    def update(self):
+        # Bijwerken van de bewaker's positie en controleren op botsingen
+        if not self.bot_at_checkpoint():
+            self.navigate(self.current_route_pos, self.next_pos)
+        else:
+            self.vx = 0
+            self.x = self.next_pos[0] * TILESIZE
+            self.vy = 0
+            self.y = self.next_pos[1] * TILESIZE
+            self.checkpoint = (self.checkpoint + 1) % len(self.route)
+            self.set_next_target()
+
         self.x += self.vx * self.game.dt
-        self.rect.x = self.x
         self.y += self.vy * self.game.dt
+        self.rect.x = self.x
         self.rect.y = self.y
 
-# Guard met rotatie en vectorgebaseerde navigatie
 class Guard1(Guard0):
+    ## Geavanceerde bewaker met rotatie en richtingsdetectie
+
     def __init__(self, game, x, y, route):
-        self.game = game
-        self.checkpoint = 0
-        self.route = route
-        self.currentpos = route[self.checkpoint]
-        self.current_route_pos = self.currentpos
-        self.next_patrol_pos = route[self.checkpoint+1]
-        self.next_pos = self.next_patrol_pos
-        self.image = pg.Surface((TILESIZE,TILESIZE))
-        self.image.fill(ROOD)
-        self.rect = self.image.get_rect()
+        # De geavanceerde bewaker initialiseren
+        super().__init__(game, x, y, route)
         self.vel = vec(0, 0)
-        self.x = x
-        self.y = y
         self.pos = vec(x, y) * TILESIZE
         self.rot = 0
         self.rot_to_player = 0
 
     def locate_player(self):
+        # Bereken de hoek naar de speler
         dx, dy = abs(self.x - self.game.player.x), abs(self.y - self.game.player.y)
         if dx == 0:
             self.rot_to_player = 90
         else:
-            self.rot_to_player = math.atan(dy/dx)*360/(2*math.pi)
+            self.rot_to_player = math.atan(dy / dx) * 360 / (2 * math.pi)
         if self.x - self.game.player.x > 0:
             self.rot_to_player = 180 - self.rot
         if self.y - self.game.player.y < 0:
             self.rot_to_player *= -1
 
     def navigate(self, start, end):
+        # Bereken de rotatie naar het doel
         dx, dy = abs(start[0] - end[0]), abs(start[1] - end[1])
         if dx == 0:
             self.rot = 90
         else:
-            self.rot = math.atan(dy/dx)*360/(2*math.pi)
-        if start[0]-end[0] > 0:
+            self.rot = math.atan(dy / dx) * 360 / (2 * math.pi)
+        if start[0] - end[0] > 0:
             self.rot = 180 - self.rot
-        if start[1]-end[1] < 0:
+        if start[1] - end[1] < 0:
             self.rot *= -1
 
     def drawfront(self):
+        # Teken een cirkel die de voorkant van de guard aangeeft
         self.front_point = self.rect.center + vec(TILESIZE, 0).rotate(-self.rot)
         self.front_point += self.game.camera.camera.topleft
-        pg.draw.circle(self.game.screen, ZWART, self.front_point , 3)
+        pg.draw.circle(self.game.screen, ZWART, self.front_point, 3)
 
     def update(self):
+        # Update bewakingspositie en rotatie
         if not self.bot_at_checkpoint():
-            self.navigate([self.pos[0]/TILESIZE, self.pos[1]/TILESIZE], self.next_pos)
+            self.navigate([self.pos[0] / TILESIZE, self.pos[1] / TILESIZE], self.next_pos)
         else:
-            print("nice :)")
             self.vel = vec(0, 0)
-            self.pos = vec(self.next_pos[0], self.next_pos[1])*TILESIZE
+            self.pos = vec(self.next_pos[0], self.next_pos[1]) * TILESIZE
             self.x, self.y = self.pos
-            self.checkpoint = (self.checkpoint+1)%len(self.route)
-            self.current_route_pos = self.next_pos
-            self.next_pos = self.route[(self.checkpoint+1)%len(self.route)]
+            self.checkpoint = (self.checkpoint + 1) % len(self.route)
+            self.set_next_target()
+
         self.vel = vec(GUARD_SNELHEID, 0).rotate(-self.rot)
-        self.pos += self.vel*self.game.dt
+        self.pos += self.vel * self.game.dt
         self.x, self.y = round(self.pos[0]), round(self.pos[1])
         self.rect.x, self.rect.y = self.pos
 
-# Guard met gezichtsveld en fasesysteem
 class Guard(Guard1):
-    def __init__(self, game, x, y, route):
-        super().__init__(game, x, y, route)
-        fases = ["patroule", "chase", "retreat"]  # Mogelijke gedragsfases
-        self.fase = fases[0]
-        self.vwidth = VIZIE_BREEDTE  # Breedte gezichtsveld (halve hoek)
-        self.vdist = VIEW_DIST  # Zichtafstand in pixels
+    # Bewakingsklasse met gezichtsveld en statussyteem
 
-    def locate_player(self):
-        return super().locate_player()
-    
-    def navigate(self, start, end):
-        return super().navigate(start, end)
+    def __init__(self, game, x, y, route):
+        # Initialiseer de bewaker met gezichtsveld
+        super().__init__(game, x, y, route)
+        self.fases = ["patrol", "chase", "retreat"]
+        self.fase = self.fases[0]
+        self.vBREEDTE = VIZIE_BREEDTE
+        self.vdist = VIEW_DIST
 
     def drawvieuwfield(self):
-        # Middenpunt van guard + offset van camera
+        # Teken het gezichtsveld van de bewaker
         center = vec(self.rect.center) + vec(self.game.camera.camera.topleft)
-    
         mid_angle_rad = math.radians(-self.rot)
-        half_angle = math.radians(self.vwidth)
-        num_points = 30  # resolutie van de sector (hoe hoger, hoe gladder)
+        half_angle = math.radians(self.vBREEDTE)
+        num_points = 30
         points = [center]
 
-        # Bereken punten langs de rand van de sector
         for i in range(num_points + 1):
             angle = mid_angle_rad - half_angle + (2 * half_angle) * (i / num_points)
             point = center + vec(self.vdist, 0).rotate_rad(angle)
             points.append(point)
 
-        # Teken het gezichtsveld
         pg.draw.polygon(self.game.screen, ZWART, points)
 
     def update(self):
-        return super().update()
+        # Update de bewaker's status en positie
+        super().update()

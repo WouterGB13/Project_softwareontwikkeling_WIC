@@ -19,8 +19,8 @@ GEEL = (255,255,0)        # Spelerkleur
 ACHTERGRONDKLEUR = DONKERGRIJS  # Achtergrondkleur van het spel
 
 TILESIZE = 32  # Grootte van één tegel (vierkant) in pixels; bij voorkeur een macht van 2
-GRIDBREEDTE = BREEDTE/TILESIZE  # Aantal tegels horizontaal
-GRIDHOOGTE = HOOGTE/TILESIZE    # Aantal tegels verticaal
+GRIDBREEDTE = BREEDTE//TILESIZE  # Aantal tegels horizontaal
+GRIDHOOGTE = HOOGTE//TILESIZE    # Aantal tegels verticaal
 
 # Instellingen voor de speler
 SPELER_SNELHEID = 300  # Snelheid waarmee de speler beweegt (pixels per seconde)
