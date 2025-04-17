@@ -13,7 +13,7 @@ from map_en_camera import *  # Map (tilemap) en camera logica
 # Hoofdklasse van het spel
 class Game:
     def __init__(self):
-        # Start game window, klok, display
+        # Initialiseer pygame, scherm, klok, status
         pg.init()
         # pg.mixer.init() is uitgeschakeld want geen geluid in dit project
         self.screen = pg.display.set_mode((BREEDTE,HOOGTE))  # Schermgrootte
@@ -23,26 +23,25 @@ class Game:
 
     # Laad kaartgegevens (uit tekstbestand)
     def load_data(self):
-        self.kaart = Map('Kaart2.txt')
+        self.kaart = Map('Kaart2.txt')  # Laad de kaart uit een .txt-bestand
 
         with open("Guards.txt", 'r') as Guards:
-            for Guard_var in Guards: #guard_var om te onderscheiden van de class maar leesbaarheid te behouden
-                temp_route = Guard_var.strip().split(';') #verwijder onzichtbare endline karakters en split in coordinatenparen (strings)
+            for Guard_var in Guards:  # Verwerk elke regel als een guard met route
+                temp_route = Guard_var.strip().split(';')  # Split op ; om routepunten te isoleren
                 route = []
-                for pair in temp_route: #coordinaten omzetten van string naar x,y-paren
-                    pair = pair.split(',') #x en y-coordinaat van elkaar scheiden (nu 2 strings die bestaan uit 1 nummer elk)
+                for pair in temp_route:
+                    pair = pair.split(',')  # Split coördinaten
                     new_pair = []
                     for element in pair:
-                        element = int(element) #string omzetten in integer om samen te voegen als bruikbaar coordinatenpaar
+                        element = int(element)  # Zet string om naar integer
                         new_pair.append(element)
-                    route.append(new_pair) #voeg niet-string coordinatenset toe aan route
-                self.guard = Guard(self, x = route[0][0], y = route[0][1], route = route) #maak guard aan met gegenereerde route
-                entitylijst.append(self.guard) #registreer guard als bestaande entity
+                    route.append(new_pair)  # Voeg x,y-paar toe aan route
+                self.guard = Guard(self, x = route[0][0], y = route[0][1], route = route)  # Guard start op eerste punt
+                entitylijst.append(self.guard)  # Voeg toe aan globale lijst van entiteiten
 
     def new(self):
-        # Start nieuwe game-ronde
+        # Start nieuwe game-ronde, bouw level op basis van kaartdata
         self.walls = []  # Reset muurlijst
-        # Loop door elke rij en tegel in de kaart
         for rij, tiles in enumerate(self.kaart.data):
             for kolom, tile in enumerate(tiles):
                 if tile == '1':  # Muur-tegel
@@ -67,8 +66,8 @@ class Game:
     def update(self):
         # Update alle entities en camera
         for entity in entitylijst:
-            entity.update() #inhoud van .update() is niet universeel
-        self.camera.update(self.player)  # Camerapositie gelijkstellen aan spelerpositie
+            entity.update()  # Voer entity-specifieke update uit
+        self.camera.update(self.player)  # Camerapositie volgen
 
     def events(self):
         # Verwerk user input (zoals sluiten van venster)
@@ -78,7 +77,7 @@ class Game:
                 self.running = False
 
     def teken_grid(self):
-        # Tekent hulplijnen over het scherm
+        # Tekent hulplijnen over het scherm (voor debuggen/positionering)
         for x in range(0, BREEDTE, TILESIZE):
             pg.draw.line(self.screen, LICHTGRIJS, (x,0) , (x,HOOGTE), 1)
         for y in range(0, HOOGTE, TILESIZE):
@@ -91,7 +90,7 @@ class Game:
         for entity in entitylijst:
             # Tekent elke entity op scherm met camera-offset toegepast
             self.screen.blit(entity.image, self.camera.apply(entity))
-            if hasattr(entity, "drawvieuwfield"):
+            if hasattr(entity, "drawvieuwfield"):  # Als entity een zichtveld heeft, teken het
                 entity.drawvieuwfield()
         pg.display.flip()  # Vernieuw het scherm
 
@@ -107,8 +106,8 @@ class Game:
 game = Game()
 game.toon_startscherm()
 while game.running:
-    game.load_data()
-    game.new()
-    game.run()
-    game.game_over()
+    game.load_data()  # Laad kaart en guards
+    game.new()        # Start nieuwe spelronde
+    game.run()        # Voer gameloop uit
+    game.game_over()  # Afhandeling na afloop game
 pg.quit()  # Sluit pygame correct af
