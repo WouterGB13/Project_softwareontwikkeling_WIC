@@ -100,7 +100,7 @@ class Player(Entity):
                 self.rect.y = self.y
 
     def update(self):
-        # Spelerspositie bijwerken en botsingen afhandelen
+        # Zorg dat alleen Player deze functie uitvoert
         self.get_keys()
         self.x += self.vx * self.game.dt
         self.y += self.vy * self.game.dt
@@ -108,6 +108,13 @@ class Player(Entity):
         self.collide_with_walls('x')
         self.rect.y = self.y
         self.collide_with_walls('y')
+
+        # Game over check bij botsing met guard
+        for entity in entitylijst:
+            if isinstance(entity, Guard) and self.rect.colliderect(entity.rect):
+                print("Speler gepakt door een guard! GAME OVER.")
+                self.game.playing = False
+                self.game.gameover = True
 
 class Wall(Entity):
     # Muur in het spel
@@ -252,6 +259,10 @@ class Guard(Guard1):
 
         pg.draw.polygon(self.game.screen, ZWART, points)
 
+class Trap(Entity):
     def update(self):
-        # Update de bewaker's status en positie
-        super().update()
+        pass
+
+class Item(Entity):
+    def update(self):
+        pass
