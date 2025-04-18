@@ -1,45 +1,67 @@
-# Gevolgde tutorials via: https://www.youtube.com/watch?v=3UxnelT9aCo&list=PLsk-HSGFjnaGQq7ybM8Lgkh5EMxUWPm2i
+# Gevolgde tutorials via: https://www.youtube.com/watch?v=3UxnelT9aCo&list=PLsk-HSGFjnaGQq7ybM8Lgkh5EMxUWPm2i 
 # Deze file komt overeen met tilemap.py in de tutorials
+# Bevat: Map parsing en camera-tracking logica
 
 import pygame as pg
-from GameSettings import *
+from GameSettings import *  # Importeert scherminstellingen, TILESIZE, kleuren etc.
 
 class Map:
+    # Klasse die een tile-based kaart laadt vanaf een tekstbestand
+
     def __init__(self, filename: str):
-        self.data: list[str] = []
+        self.data: list[str] = []  # Ruwe kaartgegevens: elke rij als string
         self.guard_waypoints_map: dict[str, list[tuple[int, int]]] = {}
+        # Dict die per guard-letter een lijst met waypoints (x, y) opslaat
 
         with open(filename, 'r') as map_file:
             for row_idx, line in enumerate(map_file):
-                clean_line = line.strip()
-                self.data.append(clean_line)
+                clean_line = line.strip()  # Verwijder eventuele spaties/newlines
+                self.data.append(clean_line)  # Voeg rij toe aan mapdata
                 for col_idx, char in enumerate(clean_line):
                     if char.isalpha() and char.upper() != 'P':
+                        # Als het een letter is (geen speler P), is het een guard-id
                         if char not in self.guard_waypoints_map:
                             self.guard_waypoints_map[char] = []
                         self.guard_waypoints_map[char].append((col_idx, row_idx))
+                        # Waypoint coördinaten worden opgeslagen per guard-ID
+
+        # Bereken afmetingen van de map in tegels en pixels
         if self.data:
-            self.tileBREEDTE: int = len(self.data[0])
-            self.tileHOOGTE: int = len(self.data)
-            self.BREEDTE: int = self.tileBREEDTE * TILESIZE
-            self.HOOGTE: int = self.tileHOOGTE * TILESIZE
+            self.tileBREEDTE: int = len(self.data[0])  # Aantal kolommen
+            self.tileHOOGTE: int = len(self.data)  # Aantal rijen
+            self.BREEDTE: int = self.tileBREEDTE * TILESIZE  # Breedte in pixels
+            self.HOOGTE: int = self.tileHOOGTE * TILESIZE  # Hoogte in pixels
         else:
+            # Fallback als bestand leeg is
             self.tileBREEDTE = self.tileHOOGTE = self.BREEDTE = self.HOOGTE = 0
 
 class Camera:
+    # Klasse die de zichtbare viewport (camera) beheert en beweegt over de kaart
+
     def __init__(self, BREEDTE: int, HOOGTE: int):
         self.camera: pg.Rect = pg.Rect(0, 0, BREEDTE, HOOGTE)
+        # Rechthoek die aangeeft welk deel van de wereld zichtbaar is
         self.BREEDTE: int = BREEDTE
         self.HOOGTE: int = HOOGTE
 
     def apply(self, entity) -> pg.Rect:
+        # Verschuift een entity zodat deze relatief aan de camera getekend wordt
         return entity.rect.move(self.camera.topleft)
 
     def update(self, target):
+        # Volgt het opgegeven target (bv. de speler)
+        # Zorgt dat het doel in het midden van het scherm blijft
+
         x: int = -target.rect.x + BREEDTE // 2
         y: int = -target.rect.y + HOOGTE // 2
+
+        # Zorg dat camera niet buiten de kaart schuift (links/boven)
         x: int = min(0, x)
         y: int = min(0, y)
+
+        # Zorg dat camera niet buiten de kaart schuift (rechts/onder)
         x: int = max(-(self.BREEDTE - BREEDTE), x)
         y: int = max(-(self.HOOGTE - HOOGTE), y)
+
+        # Pas camera-positie aan
         self.camera: pg.Rect = pg.Rect(x, y, self.BREEDTE, self.HOOGTE)
