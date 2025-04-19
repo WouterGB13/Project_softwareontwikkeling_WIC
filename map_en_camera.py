@@ -9,30 +9,20 @@ class Map:
     # Klasse die een tile-based kaart laadt vanaf een tekstbestand
 
     def __init__(self, filename: str):
-        self.data: list[str] = []  # Ruwe kaartgegevens: elke rij als string
-        self.guard_waypoints_map: dict[str, list[tuple[int, int]]] = {}
-        # Dict die per guard-letter een lijst met waypoints (x, y) opslaat
+        self.data: list[str] = []  # Alleen nog mapdata (de tegels)
 
         with open(filename, 'r') as map_file:
-            for row_idx, line in enumerate(map_file):
-                clean_line = line.strip()  # Verwijder eventuele spaties/newlines
+            for line in map_file:
+                clean_line = line.strip()  # Verwijder witruimte
                 self.data.append(clean_line)  # Voeg rij toe aan mapdata
-                for col_idx, char in enumerate(clean_line):
-                    if char.isalpha() and char.upper() != 'P':
-                        # Als het een letter is (geen speler P), is het een guard-id
-                        if char not in self.guard_waypoints_map:
-                            self.guard_waypoints_map[char] = []
-                        self.guard_waypoints_map[char].append((col_idx, row_idx))
-                        # Waypoint coördinaten worden opgeslagen per guard-ID
 
         # Bereken afmetingen van de map in tegels en pixels
         if self.data:
             self.tileBREEDTE: int = len(self.data[0])  # Aantal kolommen
-            self.tileHOOGTE: int = len(self.data)  # Aantal rijen
-            self.BREEDTE: int = self.tileBREEDTE * TILESIZE  # Breedte in pixels
-            self.HOOGTE: int = self.tileHOOGTE * TILESIZE  # Hoogte in pixels
+            self.tileHOOGTE: int = len(self.data)      # Aantal rijen
+            self.BREEDTE: int = self.tileBREEDTE * TILESIZE  # Pixelbreedte
+            self.HOOGTE: int = self.tileHOOGTE * TILESIZE    # Pixelhoogte
         else:
-            # Fallback als bestand leeg is
             self.tileBREEDTE = self.tileHOOGTE = self.BREEDTE = self.HOOGTE = 0
 
 class Camera:
