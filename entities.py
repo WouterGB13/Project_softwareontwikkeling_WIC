@@ -234,6 +234,7 @@ class Guard(Guard1):
         }
         self.laatste_zichttijd = 0
         self.retreat_target = None
+        self.vRESOLUTIE = RESOLUTIE
 
         self.search_start_time = 0
         self.search_duration = 3000  # 3 seconden zoeken
@@ -248,20 +249,34 @@ class Guard(Guard1):
         return False
     
     def heeft_zicht_op_speler(self):
-        # Check visuele afstand en kijkhoek
-        speler_pos = vec(self.game.player.rect.center)
+        # Controleer meerdere zichtpunten van de speler
+        zichtpunten = [
+            vec(self.game.player.rect.center),
+            vec(self.game.player.rect.topleft),
+            vec(self.game.player.rect.topright),
+            vec(self.game.player.rect.bottomleft),
+            vec(self.game.player.rect.bottomright)
+        ]
+
         guard_pos = vec(self.rect.center)
-        richting = speler_pos - guard_pos
-        afstand = richting.length()
+        facing = vec(1, 0).rotate(-self.rot)
 
-        if afstand > self.vdist:
-            return False
+        for punt in zichtpunten:
+            richting = punt - guard_pos
+            afstand = richting.length()
 
-        hoek_tov_front = richting.angle_to(vec(1, 0).rotate(-self.rot))
-        if abs(hoek_tov_front) > self.vBREEDTE:
-            return False
+            if afstand > self.vdist:
+                continue  # Te ver weg
 
-        return self.line_of_sight_clear(guard_pos, speler_pos)
+            hoek_tov_front = richting.angle_to(facing)
+            if abs(hoek_tov_front) > self.vBREEDTE:
+                continue  # Buiten gezichtsveld
+
+            if self.line_of_sight_clear(guard_pos, punt):
+                return True  # Zichtlijn naar minstens één punt is vrij
+
+        return False
+
 
     def line_of_sight_clear(self, start, end):
         delta = end - start
@@ -385,15 +400,19 @@ class Guard(Guard1):
             kleur = LICHTROOD
         else:
             kleur = ZWART
+
         center = vec(self.rect.center) + vec(self.game.camera.camera.topleft)
         mid_angle_rad = math.radians(-self.rot)
         half_angle = math.radians(self.vBREEDTE)
         points = [center]
-        for i in range(31):
-            angle = mid_angle_rad - half_angle + (2 * half_angle) * (i / 30)
+
+        for i in range(self.vRESOLUTIE + 1):  # +1 zodat laatste punt exact op de randhoek ligt
+            angle = mid_angle_rad - half_angle + (2 * half_angle) * (i / self.vRESOLUTIE)
             point = center + vec(self.vdist, 0).rotate_rad(angle)
             points.append(point)
+
         pg.draw.polygon(self.game.screen, kleur, points, 2)
+
 
 class Trap(Entity):
     def update(self):
