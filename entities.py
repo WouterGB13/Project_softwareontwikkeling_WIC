@@ -130,9 +130,21 @@ class Guard0(Entity): #1e versie van guards
         self.set_next_target()
 
     def set_next_target(self):
-        self.current_route_pos = self.route[self.checkpoint]
-        next_index = (self.checkpoint + 1) % len(self.route)
-        self.next_pos = self.route[next_index]
+        current_tile = vec(self.x, self.y) // TILESIZE
+        min_dist = float("inf")
+        closest = None
+        for wp in self.route:
+            if wp == self.route[self.checkpoint]:  # Sla vorige over
+                continue
+            dist = (vec(wp) - current_tile).length_squared()
+            if dist < min_dist:
+                min_dist = dist
+                closest = wp
+        if closest:
+            self.current_route_pos = tuple(current_tile)
+            self.next_pos = closest
+            self.checkpoint = self.route.index(closest)
+
 
     def navigate(self, start, end):
         start_px = vec(start) * TILESIZE
