@@ -9,7 +9,8 @@ FPS = 60        # Frames per seconde (hoe vaak het scherm wordt ververst)
 # Definities van handige RGB-kleuren
 WIT = (255,255,255)       # Voor tekst of visuele effecten
 ZWART = (0,0,0)           # Vaak gebruikt voor tekst of om lijntjes te tekenen
-ROOD = (255,0,0)          # Voor vijanden of waarschuwingen
+ROOD = (255,0,0)          # Voor vijanden
+LICHTROOD = (255,100,100) # Voor vijanden of waarschuwingen
 GROEN = (0,255,0)         # Voor muren of veilige zones
 BLAUW = (0,0,255)         # Optioneel: water, portalen, etc.
 DONKERGRIJS = (40,40,40)  # Basiskleur voor achtergrond
