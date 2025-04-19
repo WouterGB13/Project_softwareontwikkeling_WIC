@@ -121,7 +121,7 @@ class Wall(Entity):
     def update(self):
         pass  # Muren zijn voorlopig nog statisch
 
-class Guard0(Entity):
+class Guard0(Entity): #1e versie van guards
     def __init__(self, game, x, y, route):
         super().__init__(game, x, y, color=ROOD)
         self.route = route
@@ -236,7 +236,7 @@ class Guard(Guard1):
         self.retreat_target = None
 
         self.search_start_time = 0
-        self.search_duration = 3000  # 3 seconden zoeken
+        self.search_duration = SEARCH_TIME  # 3 seconden zoeken
         self.searching = False
 
 
@@ -311,7 +311,7 @@ class Guard(Guard1):
                 self.x, self.y = round(self.pos.x), round(self.pos.y)
                 self.rect.x, self.rect.y = self.pos
                 self.collide_with_walls()
-            if tijd_nu - self.laatste_zichttijd > 10000:
+            if tijd_nu - self.laatste_zichttijd > CHASE_TIME:
                 self.fase = "search"
                 self.searching = False  # reset
 

@@ -33,3 +33,5 @@ ROT_SPEED = GUARD_ROT_SPEED_PER_SPEED*GUARD_SNELHEID  # Effectieve rotatiesnelhe
 TILE_VIEW_DISTANCE = 4  # Aantal tegels dat een guard ver kan kijken
 VIEW_DIST = TILE_VIEW_DISTANCE * TILESIZE  # Zichtafstand in pixels
 VIZIE_BREEDTE = 50  # Halve gezichtsbreedte in graden (totaal zichtveld = 2 * deze waarde)
+SEARCH_TIME = 3000 #ms
+CHASE_TIME = 10000
