@@ -398,8 +398,12 @@ class Guard(Guard1):
     def drawvieuwfield(self):
         if self.fase == "chase":
             kleur = LICHTROOD
+            self.vdist = 2*VIEW_DIST
+            self.vBREEDTE = VIZIE_BREEDTE/2
         else:
             kleur = ZWART
+            self.vdist = VIEW_DIST
+            self.vBREEDTE = VIZIE_BREEDTE
 
         center = vec(self.rect.center) + vec(self.game.camera.camera.topleft)
         mid_angle_rad = math.radians(-self.rot)
