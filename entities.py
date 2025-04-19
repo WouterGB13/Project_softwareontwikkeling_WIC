@@ -238,16 +238,10 @@ class Guard(Guard1):
         return super().navigate(start, end)
 
     def drawvieuwfield(self):
-        center = vec(self.rect.center) + vec(self.game.camera.camera.topleft)
-        Lline = self.rect.center + vec(self.vdist+TILESIZE/2, 0).rotate(-(self.rot+self.vwidth)) + self.game.camera.camera.topleft
-        Rline = self.rect.center + vec(self.vdist+TILESIZE/2, 0).rotate(-(self.rot-self.vwidth)) + self.game.camera.camera.topleft
-        #teken de lijntjes:
-        pg.draw.line(self.game.screen, ZWART, center, Lline)
-        pg.draw.line(self.game.screen, ZWART, center, Rline)
-
+        pass
         #teken de arc:
-        RECT = (self.x-self.vdist  + self.game.camera.camera.x, self.y-self.vdist  + self.game.camera.camera.y, 2*self.vdist+TILESIZE, 2*self.vdist+TILESIZE) #gebruik pg.draw.rect om deze te visualiseren (hieronder: staat in notitie)
-        pg.draw.arc(self.game.screen, ZWART, RECT, (self.rot - self.vwidth)/360*math.pi*2, (self.rot + self.vwidth)/360*math.pi*2, self.vdist)
+        #RECT = (self.x-self.vdist  + self.game.camera.camera.x, self.y-self.vdist  + self.game.camera.camera.y, 2*self.vdist+TILESIZE, 2*self.vdist+TILESIZE) #gebruik pg.draw.rect om deze te visualiseren (hieronder: staat in notitie)
+        #pg.draw.arc(self.game.screen, ZWART, RECT, (self.rot - self.vwidth)/360*math.pi*2, (self.rot + self.vwidth)/360*math.pi*2, int(self.vdist+TILESIZE/2))
         #pg.draw.rect(self.game.screen, GROEN, RECT, 1)
 
     def update(self):
