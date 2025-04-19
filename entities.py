@@ -382,7 +382,7 @@ class Guard(Guard1):
 
     def drawvieuwfield(self):
         if self.fase == "chase":
-            kleur = (255, 100, 100)  # Lichtrood
+            kleur = LICHTROOD
         else:
             kleur = ZWART
         center = vec(self.rect.center) + vec(self.game.camera.camera.topleft)
