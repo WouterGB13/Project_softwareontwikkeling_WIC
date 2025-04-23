@@ -1,48 +1,67 @@
-# Gevolgde tutorials via: https://www.youtube.com/watch?v=3UxnelT9aCo&list=PLsk-HSGFjnaGQq7ybM8Lgkh5EMxUWPm2i
+# Gevolgde tutorials via: https://www.youtube.com/watch?v=3UxnelT9aCo&list=PLsk-HSGFjnaGQq7ybM8Lgkh5EMxUWPm2i 
 # Deze file komt overeen met tilemap.py in de tutorials
+# Bevat: Map parsing en camera-tracking logica
 
 import pygame as pg
-from GameSettings import *
+from GameSettings import *  # Importeert scherminstellingen, TILESIZE, kleuren etc.
 
-# Klasse voor het inladen van een tilemap uit een tekstbestand
 class Map:
-    def __init__(self, filename):
-        self.data = []
-        # Lees de kaartregels (bijv. muren/spelerposities) uit een tekstbestand
-        with open(filename,'r') as kaart:
-            for line in kaart:
-                self.data.append(line.strip())  # verwijder onzichtbare \n aan het einde van elke regel (zorgt anders voor extra rij van map)
+    # Klasse die een tile-based kaart laadt vanaf een tekstbestand
 
-        # Breedte van de kaart in tegels
-        self.tilewidth = len(self.data[0])
-        # Hoogte van de kaart in tegels
-        self.tileheight = len(self.data)
-        # Totale breedte en hoogte van de map in pixels
-        self.width = self.tilewidth * TILESIZE
-        self.height = self.tileheight * TILESIZE
+    def __init__(self, filename: str):
+        self.data: list[str] = []  # Ruwe kaartgegevens: elke rij als string
+        self.guard_waypoints_map: dict[str, list[tuple[int, int]]] = {}
+        # Dict die per guard-letter een lijst met waypoints (x, y) opslaat
 
-# Klasse voor het volgen van een entity met de camera
+        with open(filename, 'r') as map_file:
+            for row_idx, line in enumerate(map_file):
+                clean_line = line.strip()  # Verwijder eventuele spaties/newlines
+                self.data.append(clean_line)  # Voeg rij toe aan mapdata
+                for col_idx, char in enumerate(clean_line):
+                    if char.isalpha() and char.upper() != 'P':
+                        # Als het een letter is (geen speler P), is het een guard-id
+                        if char not in self.guard_waypoints_map:
+                            self.guard_waypoints_map[char] = []
+                        self.guard_waypoints_map[char].append((col_idx, row_idx))
+                        # Waypoint coördinaten worden opgeslagen per guard-ID
+
+        # Bereken afmetingen van de map in tegels en pixels
+        if self.data:
+            self.tileBREEDTE: int = len(self.data[0])  # Aantal kolommen
+            self.tileHOOGTE: int = len(self.data)  # Aantal rijen
+            self.BREEDTE: int = self.tileBREEDTE * TILESIZE  # Breedte in pixels
+            self.HOOGTE: int = self.tileHOOGTE * TILESIZE  # Hoogte in pixels
+        else:
+            # Fallback als bestand leeg is
+            self.tileBREEDTE = self.tileHOOGTE = self.BREEDTE = self.HOOGTE = 0
+
 class Camera:
-    def __init__(self, breedte, hoogte):  # grootte van weergeven deel meegeven
-        self.camera = pg.Rect(0,0, breedte, hoogte)  # rechthoek die bepaalt welk deel zichtbaar is
-        self.breedte = breedte
-        self.hoogte = hoogte
+    # Klasse die de zichtbare viewport (camera) beheert en beweegt over de kaart
 
-    # Past de positie van een entity aan zodat deze correct weergegeven wordt op het scherm
-    def apply(self, entity):
-        return entity.rect.move(self.camera.topleft)  # verschuif entity relatief aan camera-offset
+    def __init__(self, BREEDTE: int, HOOGTE: int):
+        self.camera: pg.Rect = pg.Rect(0, 0, BREEDTE, HOOGTE)
+        # Rechthoek die aangeeft welk deel van de wereld zichtbaar is
+        self.BREEDTE: int = BREEDTE
+        self.HOOGTE: int = HOOGTE
 
-    # Update de camera om een target (zoals de speler) te volgen
+    def apply(self, entity) -> pg.Rect:
+        # Verschuift een entity zodat deze relatief aan de camera getekend wordt
+        return entity.rect.move(self.camera.topleft)
+
     def update(self, target):
-        # Houd de target gecentreerd op het scherm
-        x = -target.rect.x + int(BREEDTE/2)
-        y = -target.rect.y + int(HOOGTE/2)
+        # Volgt het opgegeven target (bv. de speler)
+        # Zorgt dat het doel in het midden van het scherm blijft
 
-        # Beperk camera zodat deze niet buiten de map beweegt
-        x = min(0,x)  # links
-        y = min(0,y)  # boven
-        x = max(-(self.breedte - BREEDTE),x)  # rechts
-        y = max(-(self.hoogte - HOOGTE),y)    # onder
+        x: int = -target.rect.x + BREEDTE // 2
+        y: int = -target.rect.y + HOOGTE // 2
 
-        # Zet de nieuwe camera-positie
-        self.camera = pg.Rect(x,y, self.breedte, self.hoogte)
+        # Zorg dat camera niet buiten de kaart schuift (links/boven)
+        x: int = min(0, x)
+        y: int = min(0, y)
+
+        # Zorg dat camera niet buiten de kaart schuift (rechts/onder)
+        x: int = max(-(self.BREEDTE - BREEDTE), x)
+        y: int = max(-(self.HOOGTE - HOOGTE), y)
+
+        # Pas camera-positie aan
+        self.camera: pg.Rect = pg.Rect(x, y, self.BREEDTE, self.HOOGTE)
