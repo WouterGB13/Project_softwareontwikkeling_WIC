@@ -22,7 +22,7 @@ class Game:
         self.gameover = False  # Flag voor Game Over status
 
     def load_data(self):  # Laadt mapdata en genereert guards
-        self.kaart = Map('Kaart2.txt')  # Map wordt ingeladen vanaf een tekstbestand
+        self.kaart = Map('Github-shit\Project_softwareontwikkeling_WIC\Kaart2.txt')  # Map wordt ingeladen vanaf een tekstbestand
         self.generate_guards_from_map()
 
     def generate_guards_from_map(self):  # Genereert guards op basis van de waypoints in de kaart
