@@ -121,115 +121,110 @@ class Wall(Entity):
     def update(self):
         pass  # Muren zijn voorlopig nog statisch
 
-class Guard0(Entity): #1e versie van guards
-    def __init__(self, game, x, y, route):
-        super().__init__(game, x, y, color=ROOD)
-        self.route = route
+class Guard0():
+    def __init__(self,game,x,y,route):
+        self.game = game
         self.checkpoint = 0
-        self.speed = GUARD_SNELHEID
-        self.set_next_target()
+        self.image = pg.Surface((TILESIZE,TILESIZE))
+        self.image.fill(ROOD)
+        self.rect = self.image.get_rect()
+        self.vx = 0
+        self.vy = 0
+        self.x = x * TILESIZE
+        self.y = y * TILESIZE
+        self.rect.x = self.x
+        self.rect.y = self.y
+        self.route = route
+        self.currentpos = route[self.checkpoint]
+        self.current_route_pos = self.currentpos
+        self.next_patrol_pos = route[self.checkpoint+1]
+        self.next_pos = self.next_patrol_pos
 
-    def set_next_target(self):
-        current_tile = vec(self.x, self.y) // TILESIZE
-        min_dist = float("inf")
-        closest = None
-        for wp in self.route:
-            if wp == self.route[self.checkpoint]:  # Sla vorige over
-                continue
-            dist = (vec(wp) - current_tile).length_squared()
-            if dist < min_dist:
-                min_dist = dist
-                closest = wp
-        if closest:
-            self.current_route_pos = tuple(current_tile)
-            self.next_pos = closest
-            self.checkpoint = self.route.index(closest)
-
-
-    def navigate(self, start, end):
-        start_px = vec(start) * TILESIZE
-        end_px = vec(end) * TILESIZE
-        delta = end_px - start_px
-        distance = delta.length()
-
-        if distance > 0:
-            velocity = delta.normalize() * self.speed
-            self.vx, self.vy = velocity.x, velocity.y
-        else:
-            self.vx = self.vy = 0
+    def navigate(self,start,end):
+        # Richt snelheid op richting tussen start en eindpunt met goniometrie
+        self.vx = GUARD_SNELHEID*((end[0]*TILESIZE - start[0]*TILESIZE)/math.hypot(end[0]*TILESIZE - start[0]*TILESIZE, end[1]*TILESIZE - start[1]*TILESIZE))
+        self.vy = GUARD_SNELHEID*((end[1]*TILESIZE - start[1]*TILESIZE)/math.hypot(end[0]*TILESIZE - start[0]*TILESIZE, end[1]*TILESIZE - start[1]*TILESIZE))
 
     def bot_at_checkpoint(self):
-        target_px = vec(self.next_pos) * TILESIZE
-        return target_px.distance_to(vec(self.x, self.y)) <= 3
+        # Check of guard dicht genoeg bij doel is (marge = 3 pixels)
+        return (self.next_pos[0]*TILESIZE - 3 <= self.x <= self.next_pos[0]*TILESIZE + 3) and (self.next_pos[1]*TILESIZE - 3 <= self.y <= self.next_pos[1]*TILESIZE + 3)
 
     def update(self):
         if not self.bot_at_checkpoint():
-            self.navigate(self.current_route_pos, self.next_pos)
+            self.navigate(self.current_route_pos,self.next_pos)
         else:
-            self.vx = self.vy = 0
-            self.x, self.y = vec(self.next_pos) * TILESIZE
-            self.checkpoint = (self.checkpoint + 1) % len(self.route)
-            self.set_next_target()
-
+            self.vx = 0
+            self.x = self.next_pos[0]*TILESIZE
+            self.vy = 0
+            self.y = self.next_pos[1]*TILESIZE
+            self.checkpoint = (self.checkpoint+1)%len(self.route)
+            self.current_route_pos = self.next_pos
+            self.next_pos = self.route[(self.checkpoint+1)%len(self.route)]
         self.x += self.vx * self.game.dt
+        self.rect.x = self.x
         self.y += self.vy * self.game.dt
-        self.rect.x, self.rect.y = self.x, self.y
+        self.rect.y = self.y
 
 class Guard1(Guard0):
     def __init__(self, game, x, y, route):
-        super().__init__(game, x, y, route)
+        self.game = game
+        self.checkpoint = 0
+        self.route = route
+        self.currentpos = route[self.checkpoint]
+        self.current_route_pos = self.currentpos
+        self.next_patrol_pos = route[self.checkpoint+1]
+        self.next_pos = self.next_patrol_pos
+        self.image = pg.Surface((TILESIZE,TILESIZE))
+        self.image.fill(ROOD)
+        self.rect = self.image.get_rect()
         self.vel = vec(0, 0)
+        self.x = x
+        self.y = y
         self.pos = vec(x, y) * TILESIZE
         self.rot = 0
         self.rot_to_player = 0
 
     def locate_player(self):
-        player_pos = vec(self.game.player.x, self.game.player.y)
-        guard_pos = vec(self.x, self.y)
-        delta = player_pos - guard_pos
-
-        if delta.x == 0:
+        dx, dy = abs(self.x - self.game.player.x), abs(self.y - self.game.player.y)
+        if dx == 0:
             self.rot_to_player = 90
         else:
-            angle_rad = math.atan(abs(delta.y) / abs(delta.x))
-            self.rot_to_player = math.degrees(angle_rad)
-
-        if delta.x < 0:
-            self.rot_to_player = 180 - self.rot_to_player
-        if delta.y > 0:
+            self.rot_to_player = math.atan(dy/dx)*360/(2*math.pi)
+        if self.x - self.game.player.x > 0:
+            self.rot_to_player = 180 - self.rot
+        if self.y - self.game.player.y < 0:
             self.rot_to_player *= -1
 
     def navigate(self, start, end):
-        delta = vec(end) - vec(start)
-        if delta.x == 0:
+        dx, dy = abs(start[0] - end[0]), abs(start[1] - end[1])
+        if dx == 0:
             self.rot = 90
         else:
-            angle_rad = math.atan(abs(delta.y) / abs(delta.x))
-            self.rot = math.degrees(angle_rad)
-
-        if delta.x < 0:
+            self.rot = math.atan(dy/dx)*360/(2*math.pi)
+        if start[0]-end[0] > 0:
             self.rot = 180 - self.rot
-        if delta.y > 0:
+        if start[1]-end[1] < 0:
             self.rot *= -1
 
     def drawfront(self):
-        offset = vec(TILESIZE, 0).rotate(-self.rot)
-        self.front_point = self.rect.center + offset + self.game.camera.camera.topleft
-        pg.draw.circle(self.game.screen, ZWART, self.front_point, 3)
+        self.front_point = self.rect.center + vec(TILESIZE, 0).rotate(-self.rot)
+        self.front_point += self.game.camera.camera.topleft
+        pg.draw.circle(self.game.screen, ZWART, self.front_point , 3)
 
     def update(self):
         if not self.bot_at_checkpoint():
-            self.navigate(self.current_route_pos, self.next_pos)
+            self.navigate([self.pos[0]/TILESIZE, self.pos[1]/TILESIZE], self.next_pos)
         else:
+            print("nice :)")
             self.vel = vec(0, 0)
-            self.pos = vec(self.next_pos) * TILESIZE
+            self.pos = vec(self.next_pos[0], self.next_pos[1])*TILESIZE
             self.x, self.y = self.pos
-            self.checkpoint = (self.checkpoint + 1) % len(self.route)
-            self.set_next_target()
-
+            self.checkpoint = (self.checkpoint+1)%len(self.route)
+            self.current_route_pos = self.next_pos
+            self.next_pos = self.route[(self.checkpoint+1)%len(self.route)]
         self.vel = vec(GUARD_SNELHEID, 0).rotate(-self.rot)
-        self.pos += self.vel * self.game.dt
-        self.x, self.y = round(self.pos.x), round(self.pos.y)
+        self.pos += self.vel*self.game.dt
+        self.x, self.y = round(self.pos[0]), round(self.pos[1])
         self.rect.x, self.rect.y = self.pos
 
 class Guard(Guard1):
@@ -410,12 +405,8 @@ class Guard(Guard1):
     def drawvieuwfield(self):
         if self.fase == "chase":
             kleur = LICHTROOD
-            self.vdist = 2*VIEW_DIST
-            self.vBREEDTE = VIZIE_BREEDTE/2
         else:
             kleur = ZWART
-            self.vdist = VIEW_DIST
-            self.vBREEDTE = VIZIE_BREEDTE
 
         center = vec(self.rect.center) + vec(self.game.camera.camera.topleft)
         mid_angle_rad = math.radians(-self.rot)
@@ -428,6 +419,9 @@ class Guard(Guard1):
             points.append(point)
 
         pg.draw.polygon(self.game.screen, kleur, points, 2)
+
+    def navigate(self, start, end):
+        return super().navigate(start, end)
 
 
 class Trap(Entity):
