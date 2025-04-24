@@ -56,6 +56,9 @@ class Game:
         self.camera = Camera(self.kaart.BREEDTE, self.kaart.HOOGTE)  # Camera initialiseren
 
     def run(self):  # Main gameloop voor actieve gameplay
+        game.load_data()  # Laad kaart en guards
+        game.new()        # Start nieuwe spelronde
+
         self.playing = True
         while self.playing:
             self.dt = self.clock.tick(FPS) / 1000  # Delta time berekening voor tijdsafhankelijke beweging
@@ -136,15 +139,14 @@ class Game:
                     if button_rect.collidepoint(event.pos):  # Klik op knop
                         waiting = False
 
-    def start_game(self):  # Start een nieuw spel via .new() en daarna .run()
-        self.new()
-        self.run()
 
 # Startpunt van het spel
 game = Game()
 game.toon_startscherm()
 while game.running:
-    game.start_game()
+    game.load_data()  # Laad kaart en guards
+    game.new()        # Start nieuwe spelronde
+    game.run()        # Voer gameloop uit
     if game.gameover:
         game.game_over()
         game.gameover = False
