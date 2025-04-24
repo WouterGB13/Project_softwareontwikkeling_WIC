@@ -108,6 +108,7 @@ class Game:
 
         # Pogingen tellen
         global teller
+        print(f"Speler gepakt door een guard! GAME OVER. {teller}e poging.")
         teller_font = pg.font.SysFont(None, 48)
         teller_text = teller_font.render(f"Aantal pogingen: {teller}", True, WIT)
         teller_rect = teller_text.get_rect(center=(BREEDTE // 2, HOOGTE // 2 + 150))

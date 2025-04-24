@@ -109,7 +109,6 @@ class Player(Entity):
 
         for entity in entitylijst:
             if isinstance(entity, Guard) and self.rect.colliderect(entity.rect):
-                print("Speler gepakt door een guard! GAME OVER.")
                 self.game.playing = False
                 self.game.gameover = True
 
