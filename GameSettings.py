@@ -28,6 +28,7 @@ SPELER_SNELHEID = 300  # Snelheid waarmee de speler beweegt (pixels per seconde)
 
 # instellingen voor guards
 GUARD_SNELHEID = 50  # Hoe snel guards zich verplaatsen
+GUARD_SNELHEID_CHASE = 200
 GUARD_ROT_SPEED_PER_SPEED = 0.5  # Rotatiesnelheid afhankelijk van loopsnelheid
 ROT_SPEED = GUARD_ROT_SPEED_PER_SPEED*GUARD_SNELHEID  # Effectieve rotatiesnelheid in graden per seconde
 

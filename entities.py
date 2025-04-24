@@ -215,7 +215,6 @@ class Guard1(Guard0):
         if not self.bot_at_checkpoint():
             self.navigate([self.pos[0]/TILESIZE, self.pos[1]/TILESIZE], self.next_pos)
         else:
-            print("nice :)")
             self.vel = vec(0, 0)
             self.pos = vec(self.next_pos[0], self.next_pos[1])*TILESIZE
             self.x, self.y = self.pos
@@ -236,8 +235,8 @@ class Guard(Guard1):
         self.vdist = VIEW_DIST
         self.speeds = {
             "patrol": GUARD_SNELHEID,
-            "chase": GUARD_SNELHEID * 2,
-            "retreat": GUARD_SNELHEID
+            "chase": GUARD_SNELHEID_CHASE,
+            "retreat": GUARD_SNELHEID*2
         }
         self.laatste_zichttijd = 0
         self.retreat_target = None
@@ -405,8 +404,12 @@ class Guard(Guard1):
     def drawvieuwfield(self):
         if self.fase == "chase":
             kleur = LICHTROOD
+            self.vdist = 2*VIEW_DIST
+            self.vBREEDTE = VIZIE_BREEDTE/2
         else:
             kleur = ZWART
+            self.vdist = VIEW_DIST
+            self.vBREEDTE = VIZIE_BREEDTE
 
         center = vec(self.rect.center) + vec(self.game.camera.camera.topleft)
         mid_angle_rad = math.radians(-self.rot)
