@@ -121,7 +121,7 @@ class Wall(Entity):
     def update(self):
         pass  # Muren zijn voorlopig nog statisch
 
-class Guard0(Entity):
+class Guard0(Entity): #1e versie van guards
     def __init__(self, game, x, y, route):
         super().__init__(game, x, y, color=ROOD)
         self.route = route
@@ -130,9 +130,21 @@ class Guard0(Entity):
         self.set_next_target()
 
     def set_next_target(self):
-        self.current_route_pos = self.route[self.checkpoint]
-        next_index = (self.checkpoint + 1) % len(self.route)
-        self.next_pos = self.route[next_index]
+        current_tile = vec(self.x, self.y) // TILESIZE
+        min_dist = float("inf")
+        closest = None
+        for wp in self.route:
+            if wp == self.route[self.checkpoint]:  # Sla vorige over
+                continue
+            dist = (vec(wp) - current_tile).length_squared()
+            if dist < min_dist:
+                min_dist = dist
+                closest = wp
+        if closest:
+            self.current_route_pos = tuple(current_tile)
+            self.next_pos = closest
+            self.checkpoint = self.route.index(closest)
+
 
     def navigate(self, start, end):
         start_px = vec(start) * TILESIZE
@@ -234,9 +246,10 @@ class Guard(Guard1):
         }
         self.laatste_zichttijd = 0
         self.retreat_target = None
+        self.vRESOLUTIE = RESOLUTIE
 
         self.search_start_time = 0
-        self.search_duration = 3000  # 3 seconden zoeken
+        self.search_duration = SEARCH_TIME  # 3 seconden zoeken
         self.searching = False
 
 
@@ -248,20 +261,34 @@ class Guard(Guard1):
         return False
     
     def heeft_zicht_op_speler(self):
-        # Check visuele afstand en kijkhoek
-        speler_pos = vec(self.game.player.rect.center)
+        # Controleer meerdere zichtpunten van de speler
+        zichtpunten = [
+            vec(self.game.player.rect.center),
+            vec(self.game.player.rect.topleft),
+            vec(self.game.player.rect.topright),
+            vec(self.game.player.rect.bottomleft),
+            vec(self.game.player.rect.bottomright)
+        ]
+
         guard_pos = vec(self.rect.center)
-        richting = speler_pos - guard_pos
-        afstand = richting.length()
+        facing = vec(1, 0).rotate(-self.rot)
 
-        if afstand > self.vdist:
-            return False
+        for punt in zichtpunten:
+            richting = punt - guard_pos
+            afstand = richting.length()
 
-        hoek_tov_front = richting.angle_to(vec(1, 0).rotate(-self.rot))
-        if abs(hoek_tov_front) > self.vBREEDTE:
-            return False
+            if afstand > self.vdist:
+                continue  # Te ver weg
 
-        return self.line_of_sight_clear(guard_pos, speler_pos)
+            hoek_tov_front = richting.angle_to(facing)
+            if abs(hoek_tov_front) > self.vBREEDTE:
+                continue  # Buiten gezichtsveld
+
+            if self.line_of_sight_clear(guard_pos, punt):
+                return True  # Zichtlijn naar minstens één punt is vrij
+
+        return False
+
 
     def line_of_sight_clear(self, start, end):
         delta = end - start
@@ -311,7 +338,7 @@ class Guard(Guard1):
                 self.x, self.y = round(self.pos.x), round(self.pos.y)
                 self.rect.x, self.rect.y = self.pos
                 self.collide_with_walls()
-            if tijd_nu - self.laatste_zichttijd > 10000:
+            if tijd_nu - self.laatste_zichttijd > CHASE_TIME:
                 self.fase = "search"
                 self.searching = False  # reset
 
@@ -382,18 +409,26 @@ class Guard(Guard1):
 
     def drawvieuwfield(self):
         if self.fase == "chase":
-            kleur = (255, 100, 100)  # Lichtrood
+            kleur = LICHTROOD
+            self.vdist = 2*VIEW_DIST
+            self.vBREEDTE = VIZIE_BREEDTE/2
         else:
             kleur = ZWART
+            self.vdist = VIEW_DIST
+            self.vBREEDTE = VIZIE_BREEDTE
+
         center = vec(self.rect.center) + vec(self.game.camera.camera.topleft)
         mid_angle_rad = math.radians(-self.rot)
         half_angle = math.radians(self.vBREEDTE)
         points = [center]
-        for i in range(31):
-            angle = mid_angle_rad - half_angle + (2 * half_angle) * (i / 30)
+
+        for i in range(self.vRESOLUTIE + 1):  # +1 zodat laatste punt exact op de randhoek ligt
+            angle = mid_angle_rad - half_angle + (2 * half_angle) * (i / self.vRESOLUTIE)
             point = center + vec(self.vdist, 0).rotate_rad(angle)
             points.append(point)
+
         pg.draw.polygon(self.game.screen, kleur, points, 2)
+
 
 class Trap(Entity):
     def update(self):

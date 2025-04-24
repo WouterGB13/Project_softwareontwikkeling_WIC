@@ -9,7 +9,8 @@ FPS = 60        # Frames per seconde (hoe vaak het scherm wordt ververst)
 # Definities van handige RGB-kleuren
 WIT = (255,255,255)       # Voor tekst of visuele effecten
 ZWART = (0,0,0)           # Vaak gebruikt voor tekst of om lijntjes te tekenen
-ROOD = (255,0,0)          # Voor vijanden of waarschuwingen
+ROOD = (255,0,0)          # Voor vijanden
+LICHTROOD = (255,100,100) # Voor vijanden of waarschuwingen
 GROEN = (0,255,0)         # Voor muren of veilige zones
 BLAUW = (0,0,255)         # Optioneel: water, portalen, etc.
 DONKERGRIJS = (40,40,40)  # Basiskleur voor achtergrond
@@ -33,3 +34,6 @@ ROT_SPEED = GUARD_ROT_SPEED_PER_SPEED*GUARD_SNELHEID  # Effectieve rotatiesnelhe
 TILE_VIEW_DISTANCE = 4  # Aantal tegels dat een guard ver kan kijken
 VIEW_DIST = TILE_VIEW_DISTANCE * TILESIZE  # Zichtafstand in pixels
 VIZIE_BREEDTE = 50  # Halve gezichtsbreedte in graden (totaal zichtveld = 2 * deze waarde)
+RESOLUTIE = 180  # Aantal straal-lijnen in zichtveld (default = hoge resolutie)
+SEARCH_TIME = 3000 #ms
+CHASE_TIME = 10000

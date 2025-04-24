@@ -21,19 +21,43 @@ class Game:
         self.running = True  # Hoofdloop actief
         self.gameover = False  # Flag voor Game Over status
 
-    def load_data(self):  # Laadt mapdata en genereert guards
-        self.kaart = Map('Github-shit\Project_softwareontwikkeling_WIC\Kaart2.txt')  # Map wordt ingeladen vanaf een tekstbestand
-        self.generate_guards_from_map()
+    def load_data(self):
+        self.kaart = Map('Kaart2.txt')  # Enkel nog voor muren, player, etc.
+        self.generate_guards_from_routes('guard_routes.txt')
 
-    def generate_guards_from_map(self):  # Genereert guards op basis van de waypoints in de kaart
-        for symbool, route in self.kaart.guard_waypoints_map.items():
-            if len(route) < 2:  # Elke guard moet minstens 2 waypoints hebben
-                print(f"Guard {symbool} heeft te weinig waypoints, wordt overgeslagen.")
-                continue
-            start_x, start_y = route[0]
-            guard = Guard(self, x=start_x, y=start_y, route=route)
-            entitylijst.append(guard)  # Guard wordt aan entiteitenlijst toegevoegd
-            print(f"Guard '{symbool}' toegevoegd met route: {route}")
+    def generate_guards_from_routes(self, bestandspad):
+        try:
+            with open(bestandspad, 'r') as f:
+                for lijn in f:
+                    lijn = lijn.strip()
+                    if not lijn or ':' not in lijn:
+                        continue
+
+                    symbool, route_str = lijn.split(':')
+                    punten = route_str.strip().split()
+                    route = []
+
+                    for punt in punten:
+                        try:
+                            x_str, y_str = punt.split(',')
+                            x, y = int(x_str), int(y_str)
+                            route.append((x, y))
+                        except ValueError:
+                            print(f"Fout bij inlezen punt '{punt}' voor guard '{symbool}'")
+
+                    if len(route) < 2:
+                        print(f"Guard '{symbool}' heeft te weinig waypoints.")
+                        continue
+
+                    start_x, start_y = route[0]
+                    rest_route = route[1:]
+                    guard = Guard(self, x=start_x, y=start_y, route=rest_route)
+                    entitylijst.append(guard)
+                    print(f"Guard '{symbool}' toegevoegd. Start: ({start_x}, {start_y}) → Route: {rest_route}")
+        except FileNotFoundError:
+            print(f"Guard routebestand '{bestandspad}' niet gevonden.")
+
+
 
     def new(self):  # Start nieuw spel, reset entiteiten en laadt data
         self.walls = []  # Lijst voor muur-objecten
