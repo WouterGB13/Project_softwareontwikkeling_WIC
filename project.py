@@ -39,19 +39,6 @@ class Game:
                 entitylijst.append(self.guard)  # Voeg toe aan globale lijst van entiteiten
 
 
-
-    #     self.generate_guards_from_map()
-
-    # def generate_guards_from_map(self):  # Genereert guards op basis van de waypoints in de kaart
-    #     for symbool, route in self.kaart.guard_waypoints_map.items():
-    #         if len(route) < 2:  # Elke guard moet minstens 2 waypoints hebben
-    #             print(f"Guard {symbool} heeft te weinig waypoints, wordt overgeslagen.")
-    #             continue
-    #         start_x, start_y = route[0]
-    #         guard = Guard(self, x=start_x, y=start_y, route=route)
-    #         entitylijst.append(guard)  # Guard wordt aan entiteitenlijst toegevoegd
-    #         print(f"Guard '{symbool}' toegevoegd met route: {route}")
-
     def new(self):  # Start nieuw spel, reset entiteiten en laadt data
         self.walls = []  # Lijst voor muur-objecten
         entitylijst.clear()  # Alle entiteiten leegmaken (voor een frisse start)
@@ -154,12 +141,12 @@ class Game:
         self.run()
 
 # Startpunt van het spel
-if __name__ == "__main__":
-    game = Game()
-    game.toon_startscherm()
-    while game.running:
-        game.start_game()
-        if game.gameover:
-            game.game_over()
-            game.gameover = False
-    pg.quit()
+game = Game()
+game.toon_startscherm()
+while game.running:
+    game.start_game()
+    if game.gameover:
+        game.game_over()
+        game.gameover = False
+        game = Game() 
+pg.quit()
