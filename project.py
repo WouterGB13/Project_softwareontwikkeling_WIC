@@ -154,13 +154,11 @@ class Game:
         self.run()
 
 # Startpunt van het spel
-if __name__ == "__main__":
-    game = Game()
-    game.toon_startscherm()
-    while game.running:
-        game.start_game()
-        if game.gameover:
-            game.game_over()
-            game.gameover = False
-    pg.quit()
-    #test
+game = Game()
+game.toon_startscherm()
+while game.running:
+     game.start_game()
+     if game.gameover:
+         game.game_over()
+         game.gameover = False
+pg.quit()
