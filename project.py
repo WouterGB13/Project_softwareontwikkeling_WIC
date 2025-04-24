@@ -127,12 +127,9 @@ class Game:
         while waiting:
             for event in pg.event.get():
                 keys = pg.key.get_pressed()
-                if keys[pg.K_ESCAPE]:  # Spel afsluiten via ESC
+                if keys[pg.K_ESCAPE] or event.type == pg.QUIT:  # Spel afsluiten via ESC
                     pg.quit()
                     exit()
-                elif event.type == pg.QUIT:
-                    waiting = False
-                    self.running = False
                 elif event.type == pg.MOUSEBUTTONDOWN:
                     if button_rect.collidepoint(event.pos):  # Klik op knop
                         waiting = False
@@ -149,5 +146,5 @@ while game.running:
     if game.gameover:
         game.game_over()
         game.gameover = False
-        game = Game() 
+        game = Game()
 pg.quit()
