@@ -323,15 +323,18 @@ class Guard(Guard1):
             super().update()
 
         elif self.fase == "chase":
-            speler_pos = vec(self.game.player.rect.center)
-            richting = speler_pos - self.pos
+            #speler_pos = vec(self.game.player.rect.center)
+            richting = self.last_known_player_pos - self.pos
             if richting.length() > 0:
                 self.vel = richting.normalize() * self.speeds["chase"]
                 self.pos += self.vel * self.game.dt
                 self.x, self.y = round(self.pos.x), round(self.pos.y)
                 self.rect.x, self.rect.y = self.pos
                 self.collide_with_walls()
-            if tijd_nu - self.laatste_zichttijd > CHASE_TIME:
+            #if tijd_nu - self.laatste_zichttijd > CHASE_TIME:
+             #   self.fase = "search"
+              #  self.searching = False  # reset
+            if not (self.last_known_player_pos[0] - 6 <= self.x <= self.last_known_player_pos[0] + 6) and (self.last_known_player_pos[1] - 6 <= self.y <= self.last_known_player_pos[1] + 6):
                 self.fase = "search"
                 self.searching = False  # reset
 
@@ -401,7 +404,7 @@ class Guard(Guard1):
         self.retreat_target = dichtstbij
 
     def drawvieuwfield(self):
-        if self.fase == "chase":
+        if self.fase == "chase" or self.fase == "search":
             kleur = LICHTROOD
             self.vdist = 2*VIEW_DIST
             self.vBREEDTE = VIZIE_BREEDTE/2

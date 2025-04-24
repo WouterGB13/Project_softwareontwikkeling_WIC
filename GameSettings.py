@@ -36,5 +36,5 @@ TILE_VIEW_DISTANCE = 4  # Aantal tegels dat een guard ver kan kijken
 VIEW_DIST = TILE_VIEW_DISTANCE * TILESIZE  # Zichtafstand in pixels
 VIZIE_BREEDTE = 50  # Halve gezichtsbreedte in graden (totaal zichtveld = 2 * deze waarde)
 RESOLUTIE = 180  # Aantal straal-lijnen in zichtveld (default = hoge resolutie)
-SEARCH_TIME = 3000 #ms
+SEARCH_TIME = 10000 #ms
 CHASE_TIME = 10000
