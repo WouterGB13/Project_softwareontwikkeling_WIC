@@ -35,6 +35,8 @@ SPELER_SNELHEID = 300  # pixels per seconde
 GUARD_SNELHEID = 50  # patrol snelheid
 GUARD_SNELHEID_CHASE = 270  # snelheid tijdens achtervolging
 ALERT_DISTANCE = 200  # afstand waarbinnen guards elkaar waarschuwen (pixels)
+ROTATE_SPEED = 180  # graden per seconde
+
 
 # Zicht instellingen
 TILE_VIEW_DISTANCE = 4  # aantal tegels

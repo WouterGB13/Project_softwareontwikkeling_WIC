@@ -19,7 +19,7 @@ class Game:
         self.running = True
         self.gameover = False
         self.playing = False
-        self.entitylijst = []
+        self.entities = []
         self.teller = 0
         self.button_rect = None  # Voor herstartknop tijdens Game Over scherm
 
@@ -33,24 +33,24 @@ class Game:
                 self.guard_routes.append(temp_route)
 
     def new(self):
-        self.entitylijst.clear()
+        self.entities.clear()
         self.walls = []
         self.load_data()
 
         for row_idx, row in enumerate(self.kaart.data):
             for col_idx, tile in enumerate(row):
                 if tile == '1':
-                    wall = Wall(self, col_idx, row_idx)
+                    wall = Wall(self, (col_idx, row_idx))
                     self.walls.append(wall)
-                    self.entitylijst.append(wall)
+                    self.entities.append(wall)
                 elif tile == 'P':
-                    self.player = Player(self, col_idx, row_idx, GEEL)
-                    self.entitylijst.append(self.player)
+                    self.player = Player(self, (col_idx, row_idx), GEEL)
+                    self.entities.append(self.player)
 
         # Voeg guards toe
         for route in self.guard_routes:
-            guard = Guard(self, x=route[0][0], y=route[0][1], route=route)
-            self.entitylijst.append(guard)
+            guard = Guard(self, (route[0][0], route[0][1]), route)
+            self.entities.append(guard)
 
         self.camera = Camera(self.kaart.BREEDTE, self.kaart.HOOGTE)
 
@@ -81,11 +81,11 @@ class Game:
             exit()
 
     def update(self):
-        for entity in self.entitylijst:
+        for entity in self.entities:
             entity.update()
 
         # Botsingcontrole speler versus guards
-        for entity in self.entitylijst:
+        for entity in self.entities:
             if isinstance(entity, Guard):
                 if self.player.rect.colliderect(entity.rect):
                     self.gameover = True
@@ -97,11 +97,10 @@ class Game:
     def draw(self):
         self.screen.fill(ACHTERGRONDKLEUR)
         self.teken_grid()
-
-        for entity in self.entitylijst:
+        for entity in self.entities:
             self.screen.blit(entity.image, self.camera.apply(entity))
-            if hasattr(entity, 'drawvieuwfield'):
-                entity.drawvieuwfield()
+            if isinstance(entity, Guard):
+                entity.draw_view_field()
 
         pg.display.flip()
 
@@ -136,10 +135,13 @@ class Game:
 
         pg.display.flip()
 
+    def toon_startscherm(self):
+        pass
+
+
 # Startpunt
-if __name__ == "__main__":
-    game = Game()
-    game.toon_startscherm()
-    while game.running:
-        game.run()
-    pg.quit()
+game = Game()
+game.toon_startscherm()
+while game.running:
+    game.run()
+pg.quit()
