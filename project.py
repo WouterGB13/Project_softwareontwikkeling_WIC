@@ -38,21 +38,22 @@ class Game:
                 entitylijst.append(self.guard)  # Voeg toe aan globale lijst van entiteiten
 
 
-    def new(self):  # Start nieuw spel, reset entiteiten en laadt data
-        self.walls = []  # Lijst voor muur-objecten
-        entitylijst.clear()  # Alle entiteiten leegmaken (voor een frisse start)
-        self.load_data()  # Map en guards laden
-        for row_index, row_data in enumerate(self.kaart.data):
-            for col_index, tile in enumerate(row_data):
-                if tile == '1':  # '1' duidt een muur aan
-                    wall = Wall(self, col_index, row_index)
-                    self.walls.append(wall)
-                    entitylijst.append(wall)
-                elif tile == 'P':  # 'P' is de speler spawn-positie
-                    self.player = Player(self, col_index, row_index, GEEL)
-                    entitylijst.append(self.player)  # Speler toevoegen aan entiteitenlijst
+    def new(self):
+        self.walls = []
+        self.entities.clear()
+        self.load_data()
 
-        self.camera = Camera(self.kaart.BREEDTE, self.kaart.HOOGTE)  # Camera initialiseren
+        for row_idx, row in enumerate(self.kaart.data):
+            for col_idx, tile in enumerate(row):
+                if tile == '1':
+                    wall = Wall(self, col_idx, row_idx)
+                    self.walls.append(wall)
+                    self.entities.append(wall)
+                elif tile == 'P':
+                    self.player = Player(self, col_idx, row_idx, GEEL)
+                    self.entities.append(self.player)
+
+        self.camera = Camera(self.kaart.BREEDTE, self.kaart.HOOGTE)
 
 
     def run(self):  # Main gameloop voor actieve gameplay
@@ -105,9 +106,9 @@ class Game:
 
     def teken_grid(self):  # Optionele raster-overlay voor debug of esthetiek
         for x in range(0, BREEDTE, TILESIZE):
-            pg.draw.line(self.screen, LICHTGRIJS, (x, 0), (x, HOOGTE), 1)
+            pg.draw.line(self.screen, LICHTGRIJS, (x, 0), (x, HOOGTE))
         for y in range(0, HOOGTE, TILESIZE):
-            pg.draw.line(self.screen, LICHTGRIJS, (0, y), (BREEDTE, y), 1)
+            pg.draw.line(self.screen, LICHTGRIJS, (0, y), (BREEDTE, y))
 
 
     def draw(self):  # Teken alle entiteiten op het scherm
@@ -157,9 +158,9 @@ class Game:
         pg.display.flip()
 
 
-# Startpunt van het spel
+# Main game loop
 game = Game()
-game.toon_startscherm()
+game.start_screen()
 while game.running:
     game.run()
 pg.quit()

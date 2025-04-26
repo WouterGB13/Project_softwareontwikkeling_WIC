@@ -381,7 +381,7 @@ class Guard(Guard1):#guards kunnen spelers detecteren en varieren tussen verschi
 
 
     def drawvieuwfield(self):
-        if self.fase == "chase":
+        if self.fase == "chase" or self.fase == "search":
             kleur = LICHTROOD
             self.vdist = 2*VIEW_DIST
             self.vBREEDTE = VIZIE_BREEDTE/2
