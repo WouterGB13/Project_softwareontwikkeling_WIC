@@ -2,7 +2,8 @@ import pygame as pg
 import math
 from GameSettings import *
 
-vec = pg.math.Vector2
+vec = pg.math.Vector2  # Verkorte notatie voor 2D vectoren (handig voor posities en snelheden)
+
 
 class Entity:
     def __init__(self, game, x, y, image_path=None, color=None):
@@ -33,11 +34,24 @@ class Item(Entity):
     def update(self):
         pass
 
+
+
 class Player(Entity):
     def __init__(self, game, x, y, kleur):
         super().__init__(game, x, y, color=kleur)
-        self.vel = vec(0, 0)
+        self.vx = 0  # snelheid x
+        self.vy = 0  # snelheid y
         self.speed = SPELER_SNELHEID
+
+    def update(self):
+        # Verwerk input → beweeg → botsingscontrole → check op guards
+        self.get_keys()
+        self.x += self.vx * self.game.dt
+        self.y += self.vy * self.game.dt
+        self.rect.x = self.x
+        self.collide_with_walls('x')
+        self.rect.y = self.y
+        self.collide_with_walls('y')
 
     def get_keys(self):
         self.vel = vec(0, 0)
@@ -147,7 +161,7 @@ class Guard(BaseGuard):
             return self.line_of_sight_clear(vec(self.rect.center), player_pos)
         return False
 
-    def line_of_sight_clear(self, start, end):
+    def line_of_sight_clear(self, start, end): #zie of er geen muur in de weg staat
         delta = end - start
         steps = int(delta.length() // 4)
         for i in range(1, steps + 1):
@@ -157,6 +171,24 @@ class Guard(BaseGuard):
                 if wall.rect.colliderect(rect):
                     return False
         return True
+    
+
+    def move(self): #gebruikt in update(), afhankelijk van de fase want soms moet men niet bewegen, maar zo is het korter
+        self.vel = vec(self.speeds[self.fase],0).rotate(-self.rot)
+        self.pos += self.vel * self.game.dt
+
+
+    def bepaal_retreat_punt(self):
+        # Zoek dichtstbijzijnde waypoint in route
+        min_afstand = float("inf")
+        dichtstbij = None
+        for punt in self.route:
+            punt_px = vec(punt) * TILESIZE
+            afstand = (self.pos - punt_px).length_squared()
+            if afstand < min_afstand:
+                min_afstand = afstand
+                dichtstbij = punt
+        self.retreat_target = dichtstbij
 
     def update(self):
         rot_diff = (self.target_rot - self.rot) % 360
@@ -217,3 +249,11 @@ class Guard(BaseGuard):
                     entity.state = "chase"
                     entity.last_seen_pos = vec(self.last_seen_pos)
                     entity.last_seen_time = pg.time.get_ticks()
+
+class Trap(Entity):
+    def update(self):
+        pass  # Mogelijkheid voor val/logica
+
+class Item(Entity):
+    def update(self):
+        pass  # Kan gebruikt worden voor pickup-objecten

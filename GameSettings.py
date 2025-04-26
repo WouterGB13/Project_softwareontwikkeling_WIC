@@ -28,7 +28,7 @@ SPELER_SNELHEID = 300  # Snelheid waarmee de speler beweegt (pixels per seconde)
 
 # instellingen voor guards
 GUARD_SNELHEID = 50  # Hoe snel guards zich verplaatsen
-GUARD_SNELHEID_CHASE = 200
+GUARD_SNELHEID_CHASE = 270
 GUARD_ROT_SPEED_PER_SPEED = 0.5  # Rotatiesnelheid afhankelijk van loopsnelheid
 ROT_SPEED = GUARD_ROT_SPEED_PER_SPEED*GUARD_SNELHEID  # Effectieve rotatiesnelheid in graden per seconde
 ALERT_DISTANCE = 200  # Pixels waarbinnen guards elkaar waarschuwen
@@ -38,4 +38,4 @@ VIEW_DIST = TILE_VIEW_DISTANCE * TILESIZE  # Zichtafstand in pixels
 VIZIE_BREEDTE = 50  # Halve gezichtsbreedte in graden (totaal zichtveld = 2 * deze waarde)
 RESOLUTIE = 180  # Aantal straal-lijnen in zichtveld (default = hoge resolutie)
 SEARCH_TIME = 10000 #ms
-CHASE_TIME = 10000
+CHASE_TIME = 0
