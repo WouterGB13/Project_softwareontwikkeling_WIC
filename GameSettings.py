@@ -31,6 +31,7 @@ GUARD_SNELHEID = 50  # Hoe snel guards zich verplaatsen
 GUARD_SNELHEID_CHASE = 200
 GUARD_ROT_SPEED_PER_SPEED = 0.5  # Rotatiesnelheid afhankelijk van loopsnelheid
 ROT_SPEED = GUARD_ROT_SPEED_PER_SPEED*GUARD_SNELHEID  # Effectieve rotatiesnelheid in graden per seconde
+ALERT_DISTANCE = 200  # Pixels waarbinnen guards elkaar waarschuwen
 
 TILE_VIEW_DISTANCE = 4  # Aantal tegels dat een guard ver kan kijken
 VIEW_DIST = TILE_VIEW_DISTANCE * TILESIZE  # Zichtafstand in pixels
