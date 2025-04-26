@@ -114,9 +114,9 @@ class Guard(BaseGuard):
         self.state = "patrol"
         self.last_seen_pos = None
         self.last_seen_time = 0
-        self.view_angle = VIZIE_BREEDTE
+        self.view_angle = VISIE_BREEDTE
         self.view_dist = VIEW_DIST
-        self.search_time = SEARCH_TIME
+        self.search_time = SEARCH_TIME_MS
         self.view_resolution = RESOLUTIE
         self.rot = 0
         self.target_rot = 0
