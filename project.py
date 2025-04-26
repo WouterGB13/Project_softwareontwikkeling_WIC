@@ -18,9 +18,10 @@ class Game:
         self.clock = pg.time.Clock()  # Klok voor frameratecontrole
         self.running = True  # Hoofdloop actief
         self.gameover = False  # Flag voor Game Over status
+        self.entitylijst = []
         self.teller = 0
 
-
+    
     def load_data(self):  #FUNCTIE WORDT OPGEROEPEN IN SELF.NEW() DUS MOET IN PRINCIPE NOOIT APART WORDEN OPGEROEPEN (wat vroeger wel gebreurde) WANT DAN RUNNEN WE ALLES 2 KEER. (functie laadt mapdata en genereert guards)
         self.kaart = Map('Kaart2.txt')  # Map wordt ingeladen vanaf een tekstbestand
         with open("guard_routes.txt", 'r') as Guards:
@@ -35,25 +36,24 @@ class Game:
                         new_pair.append(element)
                     route.append(new_pair)  # Voeg x,y-paar toe aan route
                 self.guard = Guard(self, x = route[0][0], y = route[0][1], route = route)  # Guard start op eerste punt
-                entitylijst.append(self.guard)  # Voeg toe aan globale lijst van entiteiten
+                self.entitylijst.append(self.guard)  # Voeg toe aan globale lijst van entiteiten
 
 
-    def new(self):
-        self.walls = []
-        self.entities.clear()
-        self.load_data()
-
-        for row_idx, row in enumerate(self.kaart.data):
-            for col_idx, tile in enumerate(row):
-                if tile == '1':
-                    wall = Wall(self, col_idx, row_idx)
+    def new(self):  # Start nieuw spel, reset entiteiten en laadt data
+        self.walls = []  # Lijst voor muur-objecten
+        self.entitylijst.clear() #reset entities
+        self.load_data()  # Map en guards laden
+        for row_index, row_data in enumerate(self.kaart.data):
+            for col_index, tile in enumerate(row_data):
+                if tile == '1':  # '1' duidt een muur aan
+                    wall = Wall(self, col_index, row_index)
                     self.walls.append(wall)
-                    self.entities.append(wall)
-                elif tile == 'P':
-                    self.player = Player(self, col_idx, row_idx, GEEL)
-                    self.entities.append(self.player)
+                    self.entitylijst.append(wall)
+                elif tile == 'P':  # 'P' is de speler spawn-positie
+                    self.player = Player(self, col_index, row_index, GEEL)
+                    self.entitylijst.append(self.player)  # Speler toevoegen aan entiteitenlijst
 
-        self.camera = Camera(self.kaart.BREEDTE, self.kaart.HOOGTE)
+        self.camera = Camera(self.kaart.BREEDTE, self.kaart.HOOGTE)  # Camera initialiseren
 
 
     def run(self):  # Main gameloop voor actieve gameplay
@@ -76,7 +76,7 @@ class Game:
 
     def update(self):  # Logica-updates voor speler, guards, muren en camera
         self.player.update()  # Speler eerst updaten
-        for entity in entitylijst:
+        for entity in self.entitylijst:
             if isinstance(entity, Guard):
                 entity.update()  # Guard logica zoals patrouille
                 if self.player.rect.colliderect(entity.rect):
@@ -106,15 +106,15 @@ class Game:
 
     def teken_grid(self):  # Optionele raster-overlay voor debug of esthetiek
         for x in range(0, BREEDTE, TILESIZE):
-            pg.draw.line(self.screen, LICHTGRIJS, (x, 0), (x, HOOGTE))
+            pg.draw.line(self.screen, LICHTGRIJS, (x, 0), (x, HOOGTE), 1)
         for y in range(0, HOOGTE, TILESIZE):
-            pg.draw.line(self.screen, LICHTGRIJS, (0, y), (BREEDTE, y))
+            pg.draw.line(self.screen, LICHTGRIJS, (0, y), (BREEDTE, y), 1)
 
 
     def draw(self):  # Teken alle entiteiten op het scherm
         self.screen.fill(ACHTERGRONDKLEUR)
         self.teken_grid()
-        for entity in entitylijst:
+        for entity in self.entitylijst:
             self.screen.blit(entity.image, self.camera.apply(entity))  # Camera verschuift view
             if hasattr(entity, "drawvieuwfield"):  # Indien guard zichtveld heeft
                 entity.drawvieuwfield()
@@ -158,9 +158,9 @@ class Game:
         pg.display.flip()
 
 
-# Main game loop
+# Startpunt van het spel
 game = Game()
-game.start_screen()
+game.toon_startscherm()
 while game.running:
     game.run()
 pg.quit()

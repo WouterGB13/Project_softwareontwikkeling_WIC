@@ -3,7 +3,6 @@ import math
 from GameSettings import *
 
 vec = pg.math.Vector2  # Verkorte notatie voor 2D vectoren (handig voor posities en snelheden)
-entitylijst = []  # Globale lijst waarin alle actieve entiteiten worden bijgehouden
 
 
 class Entity:
@@ -103,7 +102,6 @@ class Wall(Entity):
 
     def update(self):
         pass  # Muren zijn voorlopig nog statisch
-
 
 
 class Guard0(Entity): #aller eerste versie van de guards NIET MEER AANPASSEN
@@ -242,8 +240,7 @@ class Guard(Guard1):#guards kunnen spelers detecteren en varieren tussen verschi
             super().update()
 
         elif self.fase == "chase":
-            speler_pos = vec(self.game.player.rect.center)
-            richting = speler_pos - self.pos
+            richting = self.last_known_player_pos - self.pos
             if richting.length() > 0:
                 self.rot = richting.angle_to(vec(1, 0))
                 self.move()
@@ -381,7 +378,7 @@ class Guard(Guard1):#guards kunnen spelers detecteren en varieren tussen verschi
 
 
     def drawvieuwfield(self):
-        if self.fase == "chase" or self.fase == "search":
+        if self.fase == "chase":
             kleur = LICHTROOD
             self.vdist = 2*VIEW_DIST
             self.vBREEDTE = VIZIE_BREEDTE/2
