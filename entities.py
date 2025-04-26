@@ -2,8 +2,7 @@ import pygame as pg
 import math
 from GameSettings import *
 
-vec = pg.math.Vector2  # Verkorte notatie voor 2D vectoren (handig voor posities en snelheden)
-
+vec = pg.math.Vector2  # Verkorte notatie voor vectoren
 
 class Entity:
     def __init__(self, game, x, y, image_path=None, color=None):
@@ -34,32 +33,15 @@ class Item(Entity):
     def update(self):
         pass
 
-
-
 class Player(Entity):
-    def __init__(self, game, x, y, kleur):
-        super().__init__(game, x, y, color=kleur)
-        self.vx = 0  # snelheid x
-        self.vy = 0  # snelheid y
+    def __init__(self, game, x, y, color):
+        super().__init__(game, x, y, color=color)
+        self.vel = vec(0, 0)
         self.speed = SPELER_SNELHEID
-
-    def update(self):
-        # Verwerk input → beweeg → botsingscontrole → check op guards
-        self.get_keys()
-        self.x += self.vx * self.game.dt
-        self.y += self.vy * self.game.dt
-        self.rect.x = self.x
-        self.collide_with_walls('x')
-        self.rect.y = self.y
-        self.collide_with_walls('y')
 
     def get_keys(self):
         self.vel = vec(0, 0)
         keys = pg.key.get_pressed()
-
-        if keys[pg.K_ESCAPE]:
-            pg.quit()
-            exit()
         if keys[pg.K_q] or keys[pg.K_LEFT]:
             self.vel.x = -self.speed
         if keys[pg.K_d] or keys[pg.K_RIGHT]:
@@ -95,102 +77,84 @@ class Player(Entity):
         self.pos.x += self.vel.x * self.game.dt
         self.rect.x = self.pos.x
         self.collide_with_walls('x')
+
         self.pos.y += self.vel.y * self.game.dt
         self.rect.y = self.pos.y
         self.collide_with_walls('y')
-
-        for entity in self.game.entities:
-            if isinstance(entity, Guard) and self.rect.colliderect(entity.rect):
-                self.game.playing = False
-                self.game.gameover = True
 
 class BaseGuard(Entity):
     def __init__(self, game, x, y, route):
         super().__init__(game, x, y, color=ROOD)
         self.route = route
         self.checkpoint = 0
-        self.rot = 0
-        self.target = vec(self.route[1]) * TILESIZE
         self.speed = GUARD_SNELHEID
-        self.vel = vec(0, 0)
+        self.target = vec(self.route[1]) * TILESIZE
 
     def navigate(self, start, end):
         direction = vec(end) - vec(start)
         if direction.length() != 0:
-            self.target_rot = direction.angle_to(vec(1, 0))
             return direction.normalize()
         return vec(0, 0)
 
     def at_checkpoint(self):
         return self.pos.distance_to(self.target) < 4
 
-    def update(self):
+    def patrol(self):
         if not self.at_checkpoint():
-            self.vel = self.navigate(self.pos, self.target) * self.speed
-            self.pos += self.vel * self.game.dt
+            move_dir = self.navigate(self.pos, self.target)
+            self.pos += move_dir * self.speed * self.game.dt
         else:
             self.checkpoint = (self.checkpoint + 1) % len(self.route)
             self.target = vec(self.route[(self.checkpoint + 1) % len(self.route)]) * TILESIZE
-
         self.rect.topleft = self.pos
 
 class Guard(BaseGuard):
     def __init__(self, game, x, y, route):
         super().__init__(game, x, y, route)
         self.state = "patrol"
+        self.last_seen_pos = None
         self.last_seen_time = 0
         self.view_angle = VIZIE_BREEDTE
         self.view_dist = VIEW_DIST
         self.search_time = SEARCH_TIME
         self.view_resolution = RESOLUTIE
+        self.rot = 0
         self.target_rot = 0
         self.rotate_speed = 180
-        self.last_seen_pos = None
 
     def detect_player(self):
         player_pos = vec(self.game.player.rect.center)
         direction = player_pos - vec(self.rect.center)
-
         if direction.length() > self.view_dist:
             return False
-
-        facing = vec(1, 0).rotate(-self.rot)  # Gebruik visuele rotatie ipv velocity
+        facing = vec(1, 0).rotate(-self.rot)
         angle = facing.angle_to(direction)
-
         if abs(angle) < self.view_angle:
             return self.line_of_sight_clear(vec(self.rect.center), player_pos)
         return False
 
-    def line_of_sight_clear(self, start, end): #zie of er geen muur in de weg staat
+    def line_of_sight_clear(self, start, end):
         delta = end - start
         steps = int(delta.length() // 4)
         for i in range(1, steps + 1):
             point = start + delta * (i / steps)
-            rect = pg.Rect(point.x, point.y, 2, 2)
+            point_rect = pg.Rect(point.x, point.y, 2, 2)
             for wall in self.game.walls:
-                if wall.rect.colliderect(rect):
+                if wall.rect.colliderect(point_rect):
                     return False
         return True
-    
 
-    def move(self): #gebruikt in update(), afhankelijk van de fase want soms moet men niet bewegen, maar zo is het korter
-        self.vel = vec(self.speeds[self.fase],0).rotate(-self.rot)
-        self.pos += self.vel * self.game.dt
-
-
-    def bepaal_retreat_punt(self):
-        # Zoek dichtstbijzijnde waypoint in route
-        min_afstand = float("inf")
-        dichtstbij = None
-        for punt in self.route:
-            punt_px = vec(punt) * TILESIZE
-            afstand = (self.pos - punt_px).length_squared()
-            if afstand < min_afstand:
-                min_afstand = afstand
-                dichtstbij = punt
-        self.retreat_target = dichtstbij
+    def alert_nearby_guards(self):
+        for entity in self.game.entitylijst:
+            if isinstance(entity, Guard) and entity != self:
+                if self.pos.distance_to(entity.pos) < ALERT_DISTANCE:
+                    entity.state = "chase"
+                    entity.last_seen_pos = vec(self.last_seen_pos)
 
     def update(self):
+        current_time = pg.time.get_ticks()
+
+        # Rotatie aanpassen
         rot_diff = (self.target_rot - self.rot) % 360
         if rot_diff > 180:
             rot_diff -= 360
@@ -201,59 +165,40 @@ class Guard(BaseGuard):
             self.rot += rotation_step if rot_diff > 0 else -rotation_step
         self.rot %= 360
 
-        if self.detect_player():
-            self.state = "chase"
-            self.last_seen_pos = vec(self.game.player.rect.center)
-            self.last_seen_time = pg.time.get_ticks()
-            self.alert_nearby_guards()
-
-        current_time = pg.time.get_ticks()
-
+        # Gedrag op basis van state
         if self.state == "patrol":
-            super().update()
+            self.patrol()
+            if self.detect_player():
+                self.state = "chase"
+                self.last_seen_pos = vec(self.game.player.rect.center)
+                self.last_seen_time = current_time
 
         elif self.state == "chase":
-            self.alert_nearby_guards()
+            if self.detect_player():
+                self.last_seen_pos = vec(self.game.player.rect.center)
+                self.last_seen_time = current_time
             if self.last_seen_pos:
-                direction_to_last_seen = self.last_seen_pos - vec(self.rect.center)
-                if direction_to_last_seen.length() < 4:
+                dir_to_last_seen = self.last_seen_pos - vec(self.rect.center)
+                if dir_to_last_seen.length() > 4:
+                    move_dir = dir_to_last_seen.normalize()
+                    self.pos += move_dir * GUARD_SNELHEID_CHASE * self.game.dt
+                    self.rect.topleft = self.pos
+                    self.target_rot = dir_to_last_seen.angle_to(vec(1, 0))
+                else:
                     self.state = "search"
                     self.search_start_time = current_time
-                else:
-                    self.target_rot = direction_to_last_seen.angle_to(vec(1, 0))
-                    move_direction = direction_to_last_seen.normalize()
-                    self.pos += move_direction * GUARD_SNELHEID_CHASE * self.game.dt
-                    self.rect.topleft = self.pos
 
         elif self.state == "search":
             if current_time - self.search_start_time > self.search_time:
                 self.state = "patrol"
-            self.target_rot += 60 * self.game.dt  # Roteer langzaam tijdens zoekmodus
+            self.target_rot += 60 * self.game.dt
 
     def drawvieuwfield(self):
         center = vec(self.rect.center) + vec(self.game.camera.camera.topleft)
         points = [center]
-
         for i in range(self.view_resolution + 1):
-            angle = (-self.view_angle + (2 * self.view_angle) * (i / self.view_resolution))
+            angle = (-self.view_angle + 2 * self.view_angle * (i / self.view_resolution))
             point = center + vec(self.view_dist, 0).rotate(-(self.rot + angle))
             points.append(point)
-
-        pg.draw.polygon(self.game.screen, LICHTROOD if self.state == "chase" else ZWART, points, 2)
-
-    def alert_nearby_guards(self):
-        for entity in self.game.entities:
-            if isinstance(entity, Guard) and entity != self:
-                distance = self.pos.distance_to(entity.pos)
-                if distance < ALERT_DISTANCE and entity.state != "chase":
-                    entity.state = "chase"
-                    entity.last_seen_pos = vec(self.last_seen_pos)
-                    entity.last_seen_time = pg.time.get_ticks()
-
-class Trap(Entity):
-    def update(self):
-        pass  # Mogelijkheid voor val/logica
-
-class Item(Entity):
-    def update(self):
-        pass  # Kan gebruikt worden voor pickup-objecten
+        kleur = LICHTROOD if self.state == "chase" else ZWART
+        pg.draw.polygon(self.game.screen, kleur, points, 2)
