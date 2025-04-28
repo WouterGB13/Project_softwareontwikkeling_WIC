@@ -172,6 +172,8 @@ class Guard(BaseGuard):
         # Gedrag gebaseerd op state
         if self.state == "patrol":
             move_dir = self.navigate(self.pos, self.target)
+            self.view_angle = self.view_angle_default
+            self.view_dist = self.view_dist_default
             if move_dir.length() > 0:
                 self.target_rot = move_dir.angle_to(vec(1, 0))
                 self.vel = move_dir * self.speed
@@ -185,6 +187,8 @@ class Guard(BaseGuard):
             if self.detect_player():
                 self.last_seen_pos = vec(self.game.player.rect.center)
                 self.last_seen_time = current_time
+                self.view_angle = self.view_angle_chase
+                self.view_dist = self.view_dist_chase
 
             # Synchroniseer live tijdens achtervolging
             self.alert_nearby_guards()
