@@ -16,7 +16,7 @@ class Map:
                 clean_line = line.strip()
                 self.data.append(clean_line)
                 for col_idx, char in enumerate(clean_line):
-                    if char.isalpha() and char.upper() != 'P':
+                    if char.isalpha() and char.upper() != 'P': #is dit nog nodig? het lijkt mij een overblijfsel van toen we guards in de map zelf zetten?
                         self.guard_waypoints_map.setdefault(char, []).append((col_idx, row_idx))
 
         if self.data:

@@ -9,12 +9,12 @@ class Entity:
         self.game = game
         self.pos = vec(pos) * TILESIZE
         self.image = pg.Surface((TILESIZE, TILESIZE))
-        if image_path:
+        if image_path: #image file
             self.image = pg.image.load(image_path).convert_alpha()
             self.image = pg.transform.scale(self.image, (TILESIZE, TILESIZE))
-        elif color:
+        elif color: #meegegeven kleur
             self.image.fill(color)
-        else:
+        else: #standaard
             self.image.fill(WIT)
         self.rect = self.image.get_rect(topleft=self.pos)
 
@@ -75,7 +75,7 @@ class Player(Entity):
             if isinstance(entity, Guard):
                 if entity.detect_player():
                     entity.state = "chase"
-                    entity.last_seen_pos = vec(self.rect.center)
+                    entity.last_seen_pos = vec(self.rect.center) #geef eigen positie door naar alle guards die weten waar player is
 
     def update(self):
         self.get_keys()
@@ -108,7 +108,7 @@ class BaseGuard(Entity):
         return vec(0, 0)
 
     def at_checkpoint(self):
-        return self.pos.distance_to(self.target) < 4
+        return self.pos.distance_to(self.target) < 1
 
     def patrol(self):
         if not self.at_checkpoint():
@@ -117,6 +117,7 @@ class BaseGuard(Entity):
                 self.target_rot = move_dir.angle_to(vec(1, 0))
             self.pos += move_dir * self.speed * self.game.dt
         else:
+            self.pos = self.target
             self.checkpoint = (self.checkpoint + 1) % len(self.route)
             self.target = vec(self.route[(self.checkpoint + 1) % len(self.route)]) * TILESIZE
         self.rect.topleft = self.pos
