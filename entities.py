@@ -266,7 +266,6 @@ class Guard(BaseGuard):
                             # Als beide in chase zijn, synchroniseer de laatst geziene positie
                             entity.last_seen_pos = vec(self.last_seen_pos)
 
-
     def move_and_collide(self):
         # Eerst X
         self.pos.x += self.vel.x * self.game.dt
@@ -397,7 +396,61 @@ class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad
             if current_time - self.search_start_time > self.search_time:
                 self.state = "patrol"
 
-class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad
+class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET AF
     def __init__(self, game, pos, route):
         super().__init__(game, pos, route)
         self.image.fill(PAARS)
+
+    def determine_fastes_route(self): #geeft een lijst terug met punten voor de snelste route op basis van de laatst geziene positie (vooral voor chase-hulp, de gewone chase kunnen een versimpelde versie volgen)
+        #stap 1: check of we de speler niet volledig kunnen zien (laatste locatie: vul hitbox aan) => schakel over op rechtstreekse achtervolging
+        #stap 2: zo niet, sla de muren op die we kunnen zien (collision bij het kijken): we hebben de coordinaten nodig
+        #stap 3: Hou rekening met de breedte van onze hitbox, wijk vervolgens de hoek naar de speler beetje bij beetje af tot je een pad vindt om naast de muur te geraken
+        #stap 4: spawn denkbeeldig op die locatie en blijf vorige stappen opnieuw uitvoeren tot we bij de speler zijn.
+        #stap 5: ga terug naar begin locatie en pak nu de andere hoek zodat we langs de andere kant rond de muren lopen (max 180° verschil)
+        #stap 6: herhaal weeral tot bij de speler
+        #stap 7: bekijk de afstanden afgelegd en pak de minst lange route
+
+        muren_in_de_weg = []
+        center = self.last_seen_pos
+        player_points = [ #MERK OP: als we later de playersize onafhankelijk maken van de TILESIZE dan zal dit hier ook moeten verandert worden. Momenteel zijn hier gewoon geen aparte variabelen voor.
+            vec(center) + vec(-TILESIZE, -TILESIZE), #linksboven
+            vec(center) + vec(TILESIZE, -TILESIZE), #rechtsboven
+            vec(center),
+            vec(center) + vec(-TILESIZE, TILESIZE), #linksonder
+            vec(center) + vec(TILESIZE, TILESIZE), #rechtsboven
+        ]
+
+        vrij_zicht = True
+        for point in player_points:
+            if not self.line_of_sight_clear(vec(self.rect.center), point) == True: #pas op, kan ook een muur returnen (nieuwe def)
+                vrij_zicht = False
+                muren_in_de_weg.append(self.line_of_sight_clear(vec(self.rect.center), point))
+
+        to_target = self.last_seen_pos - vec(self.rect.center)
+        if vrij_zicht:
+            #achtervolg de speler direct: probeer misschien code over te nemen uit super()? lijn 197?
+            if to_target.length() > 0:
+                    move_dir = to_target.normalize()
+                    self.vel = move_dir * GUARD_SNELHEID_CHASE
+                    self.target_rot = move_dir.angle_to(vec(1, 0))
+                    self.move_and_collide()
+
+            if to_target.length() < 4:
+                self.state = "search"
+                self.search_start_time = pg.time.get_ticks()
+            #deze code wordt waarsch nog wat aangepast
+            pass
+
+        else: #we hebben geen vrij zicht op de laatst locatie van de speler
+            pass
+
+    def line_of_sight_clear(self, start, end):
+        delta = end - start
+        steps = int(delta.length() // 4)  # elke 4 pixels een check
+        for i in range(1, steps + 1):
+            point = start + delta * (i / steps)
+            point_rect = pg.Rect(point.x, point.y, 2, 2)
+            for wall in self.game.entities:
+                if isinstance(wall, Wall) and wall.rect.colliderect(point_rect):
+                    return wall
+        return True
