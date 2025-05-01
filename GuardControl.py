@@ -3,6 +3,8 @@ import math
 from GameSettings import *
 from entities import Entity, Wall
 
+vec = pg.math.Vector2
+
 
 class BaseGuard(Entity):
     def __init__(self, game, pos, route):
