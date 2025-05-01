@@ -3,7 +3,7 @@ import math
 from GameSettings import *
 from entities import Entity, Wall
 
-#vector importeren? Also wat doet deze file?
+vec = pg.math.Vector2
 
 
 class BaseGuard(Entity):

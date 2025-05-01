@@ -34,13 +34,19 @@ class Game:
     def load_data(self):
         """Laad de kaart en de routes van de guards."""
         self.kaart = Map('Kaart2.txt')  # Laad map layout uit tekstbestand
-        self.guard_routes = []
+        self.dumb_guard_routes = []
+        self.smart_guard_routes = []
 
         with open("guard_routes.txt", 'r') as Guards:
             for line in Guards:
-                # Elke route is een lijst van (x,y) checkpoints
+                # Elke route is een lijst van (x,y) checkpoints begonnen met een 0 als het een domme guard is en een 1 als hij slim is
                 temp_route = [list(map(int, pair.split(','))) for pair in line.strip().split(';')]
-                self.guard_routes.append(temp_route)
+                if temp_route[0][0] == 1:
+                    temp_route[0].pop(0)
+                    self.smart_guard_routes.append(temp_route)
+                if temp_route[0][0] == 0:   
+                    temp_route[0].pop(0)
+                    self.dumb_guard_routes.append(temp_route)
 
     def new(self):
         """Start een nieuw spel: reset entiteiten en laad alles."""
@@ -60,7 +66,7 @@ class Game:
                     self.entities.append(self.player)
 
         # Plaats guards met hun patrouille-routes
-        for route in self.guard_routes:
+        for route in self.dumb_guard_routes:
             guard = Guard(self, (route[0][0], route[0][1]), route)
             self.entities.append(guard)
 

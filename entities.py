@@ -108,7 +108,7 @@ class BaseGuard(Entity): #Ik zou kiezen tussen of de historiek laten of met bran
         return vec(0, 0)
 
     def at_checkpoint(self):
-        return self.pos.distance_to(self.target) < 1
+        return self.pos.distance_to(self.target) < 0.5
 
     def patrol(self):
         if not self.at_checkpoint():
@@ -183,7 +183,7 @@ class Guard(BaseGuard):
                 self.checkpoint = (self.checkpoint + 1) % len(self.route)
                 self.target = vec(self.route[(self.checkpoint + 1) % len(self.route)]) * TILESIZE
 
-        elif self.state == "chase":
+        elif self.state == "chase" or self.state == "chase_help":
             if self.detect_player():
                 self.last_seen_pos = vec(self.game.player.rect.center)
                 self.last_seen_time = current_time
@@ -191,7 +191,8 @@ class Guard(BaseGuard):
                 self.view_dist = self.view_dist_chase
 
             # Synchroniseer live tijdens achtervolging
-            self.alert_nearby_guards()
+            if self.state == "chase":
+                self.alert_nearby_guards()
 
             if self.last_seen_pos:
                 to_target = self.last_seen_pos - vec(self.rect.center)
@@ -258,7 +259,7 @@ class Guard(BaseGuard):
                     if self.state == "chase":
                         # Deze guard zit al in chase modus, dus push informatie door
                         if entity.state != "chase":
-                            entity.state = "chase"
+                            entity.state = "chase_help"
                             entity.last_seen_pos = vec(self.last_seen_pos)
                         else:
                             # Als beide in chase zijn, synchroniseer de laatst geziene positie
