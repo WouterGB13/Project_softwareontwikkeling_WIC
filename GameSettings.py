@@ -34,7 +34,7 @@ SPELER_SNELHEID = 300  # pixels per seconde
 
 # Guard instellingen
 GUARD_SNELHEID = 50  # patrol snelheid
-GUARD_SNELHEID_CHASE = 270  # snelheid tijdens achtervolging
+GUARD_SNELHEID_CHASE = 250  # snelheid tijdens achtervolging (270 origineel, aangepast voor testing purposes)
 ALERT_DISTANCE = 200  # afstand waarbinnen guards elkaar waarschuwen (pixels)
 ROTATE_SPEED = 360  # graden per seconde
 
