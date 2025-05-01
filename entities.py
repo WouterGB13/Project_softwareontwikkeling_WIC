@@ -308,7 +308,7 @@ class Guard(BaseGuard):
 
 class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad IS AF, PROBLEEM MET RESUME ROUTE WORDT VEROORZAAKT DOOR ALGEMENE NAVIGATIECODE
     #DO NOT TOUCH ZONDER OVERLEGGEN
-    
+
     def __init__(self, game, pos, route):
         super().__init__(game, pos, route)
         self.retreat_path = []
@@ -320,7 +320,6 @@ class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad IS AF, PROBL
     
     def update(self):
         current_time = pg.time.get_ticks()
-        #print(self.pos)
 
         # ALTIJD detectie checken, maakt niet uit in welke state
         if self.detect_player():
@@ -347,7 +346,6 @@ class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad IS AF, PROBL
                 self.next_cp = self.target
                 self.target = self.retreat_path[-1]
             move_dir = self.navigate(self.pos, self.target)
-            #print(self.target)
             self.view_angle = self.view_angle_default
             self.view_dist = self.view_dist_default
             if move_dir.length() > 0:
@@ -372,9 +370,7 @@ class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad IS AF, PROBL
                 self.view_angle = self.view_angle_chase
                 self.view_dist = self.view_dist_chase
 
-            
             self.retreat_path.append(self.pos.copy())
-            print(self.retreat_path)
 
             # Synchroniseer live tijdens achtervolging
             if self.state == "chase":
