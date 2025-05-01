@@ -4,6 +4,7 @@ from GameSettings import BREEDTE, HOOGTE, TILESIZE
 
 vec = pg.math.Vector2
 
+#dubbele file?
 
 def heuristic(a, b):
     """Eenvoudige manhattan afstand voor grids."""

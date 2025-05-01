@@ -22,13 +22,12 @@ class Game:
         pg.display.set_caption(TITEL)
         self.clock = self.create_clock()
         self.running = True
-        self.playing = False
         self.gameover = False
         self.entities = []      # Alle objecten (walls, player, guards)
         self.teller = 0          # Aantal keren dat speler game over ging
         self.button_rect = None  # Voor resetknop na game over
 
-    def create_clock(self):
+    def create_clock(self): #VRAAG 1: waarom aparte functie?
         """Maakt de klok aan voor FPS control."""
         return pg.time.Clock()
 
@@ -107,7 +106,7 @@ class Game:
                 if self.player.rect.colliderect(entity.rect):
                     self.gameover = True
                     self.teller += 1
-                    print(f"Speler gepakt door guard! GAME OVER. {self.teller}e poging.")
+                    print(f"Speler gepakt door guard! GAME OVER. {self.teller}e poging.") #VRAAG 3: doen we print weg?
 
         # Update camera positie gebaseerd op speler
         self.camera.update(self.player)

@@ -1,6 +1,6 @@
 import pygame as pg
 import math
-import sys
+import sys #waarvoor gebruiken wij dit?
 
 # Initialisatie
 pg.init()

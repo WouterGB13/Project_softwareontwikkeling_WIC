@@ -92,7 +92,7 @@ class Player(Entity):
 
         self.detect_guard()
 
-class BaseGuard(Entity):
+class BaseGuard(Entity): #Ik zou kiezen tussen of de historiek laten of met branches werken en alles samen voegen. Deze extra class doet niks
     def __init__(self, game, pos, route):
         super().__init__(game, pos, color=ROOD)
         self.route = route
@@ -303,3 +303,4 @@ class Guard(BaseGuard):
             points.append(point)
         kleur = LICHTROOD if self.state == "chase" else ZWART
         pg.draw.polygon(self.game.screen, kleur, points, 2)
+

@@ -3,6 +3,8 @@ import math
 from GameSettings import *
 from entities import Entity, Wall
 
+#vector importeren? Also wat doet deze file?
+
 
 class BaseGuard(Entity):
     def __init__(self, game, pos, route):

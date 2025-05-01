@@ -1,4 +1,4 @@
-import heapq
+import heapq #is dit het algoritme? also: deze file: wordt dit de nieuwe entities file uiteindlijk of wat is het doel? (like moeten we nog verder werken aan de oude)
 import pygame as pg
 from GameSettings import BREEDTE, HOOGTE, TILESIZE
 
