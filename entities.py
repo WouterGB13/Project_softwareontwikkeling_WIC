@@ -306,7 +306,9 @@ class Guard(BaseGuard):
         pg.draw.polygon(self.game.screen, kleur, points, 2)
 
 
-class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad
+class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad IS AF, PROBLEEM MET RESUME ROUTE WORDT VEROORZAAKT DOOR ALGEMENE NAVIGATIECODE
+    #DO NOT TOUCH ZONDER OVERLEGGEN
+    
     def __init__(self, game, pos, route):
         super().__init__(game, pos, route)
         self.retreat_path = []
