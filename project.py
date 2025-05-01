@@ -67,7 +67,11 @@ class Game:
 
         # Plaats guards met hun patrouille-routes
         for route in self.dumb_guard_routes:
-            guard = Guard(self, (route[0][0], route[0][1]), route)
+            guard = Domme_Guard(self, (route[0][0], route[0][1]), route)
+            self.entities.append(guard)
+
+        for route in self.smart_guard_routes:
+            guard = Slimme_Guard(self, (route[0][0], route[0][1]), route)
             self.entities.append(guard)
 
         # Installeer de camera om mee te bewegen met de speler

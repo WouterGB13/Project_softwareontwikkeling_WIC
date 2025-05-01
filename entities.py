@@ -305,3 +305,13 @@ class Guard(BaseGuard):
         kleur = LICHTROOD if self.state == "chase" else ZWART
         pg.draw.polygon(self.game.screen, kleur, points, 2)
 
+
+class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad
+    def __init__(self, game, pos, route):
+        super().__init__(game, pos, route)
+        
+
+class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad
+    def __init__(self, game, pos, route):
+        super().__init__(game, pos, route)
+        self.image.fill(PAARS)
