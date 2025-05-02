@@ -315,7 +315,7 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
         super().__init__(game, pos, route)
         self.image.fill(PAARS)
 
-    def determine_fastes_route(self): #geeft een lijst terug met punten voor de snelste route op basis van de laatst geziene positie (vooral voor chase-hulp, de gewone chase kunnen een versimpelde versie volgen)
+    def determine_fastes_route(self): #geeft een lijst terug met alle tiles voor de snelste route op basis van de laatst doorgegeven positie (vooral voor chase-hulp, de gewone chase kunnen een versimpelde versie volgen)
         #stap 1: check of we de speler niet volledig kunnen zien (laatste locatie: vul hitbox aan) => schakel over op rechtstreekse achtervolging
         #stap 2: zo niet, sla de muren op die we kunnen zien (collision bij het kijken): we hebben de coordinaten nodig
         #stap 3: Hou rekening met de breedte van onze hitbox, wijk vervolgens de hoek naar de speler beetje bij beetje af tot je een pad vindt om naast de muur te geraken
@@ -323,22 +323,30 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
         #stap 5: ga terug naar begin locatie en pak nu de andere hoek zodat we langs de andere kant rond de muren lopen (max 180° verschil)
         #stap 6: herhaal weeral tot bij de speler
         #stap 7: bekijk de afstanden afgelegd en pak de minst lange route
+        pass
 
-        muren_in_de_weg = []
+    def move_and_dogde_walls(self):#buigt het pad naar de speler af wanneer die achter een muur staat om botsing te voorkomen
+        #stap 1: check of we de speler niet volledig kunnen zien (laatste locatie: vul hitbox aan) => schakel over op rechtstreekse achtervolging
+        #stap 2: zo niet, sla de muren op die we kunnen zien (collision bij het kijken): we hebben de coordinaten nodig
+        #stap 3: Hou rekening met de breedte van onze hitbox, wijk vervolgens de hoek naar de speler beetje bij beetje af tot je een pad vindt om naast de muur te geraken
+        #stap 4: volg pad
+        vrije_zicht_punten = []
         center = self.last_seen_pos
         player_points = [ #MERK OP: als we later de playersize onafhankelijk maken van de TILESIZE dan zal dit hier ook moeten verandert worden. Momenteel zijn hier gewoon geen aparte variabelen voor.
             vec(center) + vec(-TILESIZE, -TILESIZE), #linksboven
             vec(center) + vec(TILESIZE, -TILESIZE), #rechtsboven
             vec(center),
             vec(center) + vec(-TILESIZE, TILESIZE), #linksonder
-            vec(center) + vec(TILESIZE, TILESIZE), #rechtsboven
+            vec(center) + vec(TILESIZE, TILESIZE), #rechtsonder
         ]
 
         vrij_zicht = True
         for point in player_points:
             if not self.line_of_sight_clear(vec(self.rect.center), point) == True: #pas op, kan ook een muur returnen (nieuwe def)
                 vrij_zicht = False
-                muren_in_de_weg.append(self.line_of_sight_clear(vec(self.rect.center), point))
+            else:
+                vrije_zicht_punten.append(point)
+                #muren_in_de_weg.append(self.line_of_sight_clear(vec(self.rect.center), point))
 
         to_target = self.last_seen_pos - vec(self.rect.center)
         if vrij_zicht:
@@ -352,11 +360,15 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
             if to_target.length() < 4:
                 self.state = "search"
                 self.search_start_time = pg.time.get_ticks()
-            #deze code wordt waarsch nog wat aangepast
-            pass
+            #deze code wordt waarsch nog wat aangepast, we moeten gewoon achtervolgen dus afhankelijk van hoe het in de update geïmplementeerd moet worden
 
         else: #we hebben geen vrij zicht op de laatst locatie van de speler
-            pass
+            #STAP 1: bepaal achter welke muur de spelercenter staat, pak de kant waarlangs we hem kunnen zien en meet hiervan de positie om exact langs de dichtbijzijnde kant van de muur te kunnen
+            relevante_muur = self.line_of_sight_clear(vec(self.rect.center), vec(center))
+            #om links of rechts te bepalen vergelijken we de zichtbare 
+            #afhankelijk van onze positie t.o.v de muur moeten we eerst uitwijken voor zijn hoek of niet.
+
+
 
     def line_of_sight_clear(self, start, end):
         delta = end - start
