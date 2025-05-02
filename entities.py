@@ -149,6 +149,7 @@ class Guard(BaseGuard):
 
     def update(self):
         current_time = pg.time.get_ticks()
+        
 
         # ALTIJD detectie checken, maakt niet uit in welke state
         if self.detect_player():
@@ -305,10 +306,93 @@ class Guard(BaseGuard):
         pg.draw.polygon(self.game.screen, kleur, points, 2)
 
 
-class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad
+class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad IS AF, PROBLEEM MET RESUME ROUTE WORDT VEROORZAAKT DOOR ALGEMENE NAVIGATIECODE
+    #DO NOT TOUCH ZONDER OVERLEGGEN
+
     def __init__(self, game, pos, route):
         super().__init__(game, pos, route)
-        
+        self.retreat_path = []
+
+    def checkretreat(self):
+        if len(self.retreat_path) != 0:
+            return True
+        return False
+    
+    def update(self):
+        current_time = pg.time.get_ticks()
+
+        # ALTIJD detectie checken, maakt niet uit in welke state
+        if self.detect_player():
+            if self.state != "chase":
+                self.state = "chase"
+                self.last_seen_pos = vec(self.game.player.rect.center)
+                self.last_seen_time = current_time
+                self.alert_nearby_guards()
+
+        # Smooth rotation (blijft gewoon hetzelfde)
+        rot_diff = (self.target_rot - self.rot) % 360
+        if rot_diff > 180:
+            rot_diff -= 360
+        rotation_step = self.rotate_speed * self.game.dt
+        if abs(rot_diff) < rotation_step:
+            self.rot = self.target_rot
+        else:
+            self.rot += rotation_step if rot_diff > 0 else -rotation_step
+        self.rot %= 360
+
+        # Gedrag gebaseerd op state
+        if self.state == "patrol":
+            if self.checkretreat() == True:
+                self.next_cp = self.target
+                self.target = self.retreat_path[-1]
+            move_dir = self.navigate(self.pos, self.target)
+            self.view_angle = self.view_angle_default
+            self.view_dist = self.view_dist_default
+            if move_dir.length() > 0:
+                self.target_rot = move_dir.angle_to(vec(1, 0))
+                self.vel = move_dir * self.speed
+                self.move_and_collide()
+
+            if self.at_checkpoint():
+                self.checkpoint = (self.checkpoint + 1) % len(self.route)
+                self.target = vec(self.route[(self.checkpoint + 1) % len(self.route)]) * TILESIZE
+                if len(self.retreat_path) != 0:
+                    self.retreat_path.pop(-1)
+                    if len(self.retreat_path) >= 1: #anders een error "list index out of range"
+                        self.target = self.retreat_path[-1]
+                    else: 
+                        self.target = self.next_cp #resume origineel pad
+
+        elif self.state == "chase" or self.state == "chase_help":
+            if self.detect_player():
+                self.last_seen_pos = vec(self.game.player.rect.center)
+                self.last_seen_time = current_time
+                self.view_angle = self.view_angle_chase
+                self.view_dist = self.view_dist_chase
+
+            self.retreat_path.append(self.pos.copy())
+
+            # Synchroniseer live tijdens achtervolging
+            if self.state == "chase":
+                self.alert_nearby_guards()
+
+            if self.last_seen_pos: #if vector? hoe werkt dit?
+                to_target = self.last_seen_pos - vec(self.rect.center)
+                if to_target.length() > 0:
+                    move_dir = to_target.normalize()
+                    self.vel = move_dir * GUARD_SNELHEID_CHASE
+                    self.target_rot = move_dir.angle_to(vec(1, 0))
+                    self.move_and_collide()
+
+                if to_target.length() < 4:
+                    self.state = "search"
+                    self.search_start_time = current_time
+
+        elif self.state == "search":
+            self.vel = vec(0, 0)
+            self.target_rot += 60 * self.game.dt  # rustig rondkijken
+            if current_time - self.search_start_time > self.search_time:
+                self.state = "patrol"
 
 class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET AF
     def __init__(self, game, pos, route):
