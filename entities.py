@@ -236,7 +236,7 @@ class Guard(BaseGuard):
             if abs(angle) > self.view_angle:
                 continue  # buiten zichtveld
 
-            if self.line_of_sight_clear(vec(self.rect.center), point):
+            if self.line_of_sight_clear(vec(self.rect.center), point) == True:
                 return True  # speler gedetecteerd!
 
         return False  # geen enkele hoek voldeed
@@ -399,7 +399,74 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
         super().__init__(game, pos, route)
         self.image.fill(PAARS)
 
-    def determine_fastes_route(self): #geeft een lijst terug met punten voor de snelste route op basis van de laatst geziene positie (vooral voor chase-hulp, de gewone chase kunnen een versimpelde versie volgen)
+    def update(self):
+        current_time = pg.time.get_ticks()
+        
+
+        # ALTIJD detectie checken, maakt niet uit in welke state
+        if self.detect_player():
+            if self.state != "chase":
+                self.state = "chase"
+                self.last_seen_pos = vec(self.game.player.rect.center)
+                self.last_seen_time = current_time
+                self.alert_nearby_guards()
+
+        # Smooth rotation (blijft gewoon hetzelfde)
+        rot_diff = (self.target_rot - self.rot) % 360
+        if rot_diff > 180:
+            rot_diff -= 360
+        rotation_step = self.rotate_speed * self.game.dt
+        if abs(rot_diff) < rotation_step:
+            self.rot = self.target_rot
+        else:
+            self.rot += rotation_step if rot_diff > 0 else -rotation_step
+        self.rot %= 360
+
+        # Gedrag gebaseerd op state
+        if self.state == "patrol":
+            move_dir = self.navigate(self.pos, self.target)
+            self.view_angle = self.view_angle_default
+            self.view_dist = self.view_dist_default
+            if move_dir.length() > 0:
+                self.target_rot = move_dir.angle_to(vec(1, 0))
+                self.vel = move_dir * self.speed
+                self.move_and_collide()
+
+            if self.at_checkpoint():
+                self.checkpoint = (self.checkpoint + 1) % len(self.route)
+                self.target = vec(self.route[(self.checkpoint + 1) % len(self.route)]) * TILESIZE
+
+        elif self.state == "chase" or self.state == "chase_help":
+            if self.detect_player():
+                self.last_seen_pos = vec(self.game.player.rect.center)
+                self.last_seen_time = current_time
+                self.view_angle = self.view_angle_chase
+                self.view_dist = self.view_dist_chase
+
+            # Synchroniseer live tijdens achtervolging
+            if self.state == "chase":
+                self.alert_nearby_guards()
+
+            if self.last_seen_pos:
+                #to_target = self.last_seen_pos - vec(self.rect.center)
+                to_target = self.move_and_dogde_walls()
+                if to_target.length() > 0:
+                    move_dir = to_target.normalize()
+                    self.vel = move_dir * GUARD_SNELHEID_CHASE
+                    self.target_rot = move_dir.angle_to(vec(1, 0))
+                    self.move_and_collide()
+
+                if to_target.length() < 4:
+                    self.state = "search"
+                    self.search_start_time = current_time
+
+        elif self.state == "search":
+            self.vel = vec(0, 0)
+            self.target_rot += 60 * self.game.dt  # rustig rondkijken
+            if current_time - self.search_start_time > self.search_time:
+                self.state = "patrol"
+
+    def determine_fastes_route(self): #geeft een lijst terug met alle tiles voor de snelste route op basis van de laatst doorgegeven positie (vooral voor chase-hulp, de gewone chase kunnen een versimpelde versie volgen)
         #stap 1: check of we de speler niet volledig kunnen zien (laatste locatie: vul hitbox aan) => schakel over op rechtstreekse achtervolging
         #stap 2: zo niet, sla de muren op die we kunnen zien (collision bij het kijken): we hebben de coordinaten nodig
         #stap 3: Hou rekening met de breedte van onze hitbox, wijk vervolgens de hoek naar de speler beetje bij beetje af tot je een pad vindt om naast de muur te geraken
@@ -407,40 +474,82 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
         #stap 5: ga terug naar begin locatie en pak nu de andere hoek zodat we langs de andere kant rond de muren lopen (max 180° verschil)
         #stap 6: herhaal weeral tot bij de speler
         #stap 7: bekijk de afstanden afgelegd en pak de minst lange route
+        pass
 
-        muren_in_de_weg = []
+    def move_and_dogde_walls(self):#buigt het pad naar de speler af wanneer die achter een muur staat om botsing te voorkomen door gewoon een nieuw doel te returnen
+        #stap 1: check of we de speler niet volledig kunnen zien (laatste locatie: vul hitbox aan) => schakel over op rechtstreekse achtervolging
+        #stap 2: zo niet, sla de muren op die we kunnen zien (collision bij het kijken): we hebben de coordinaten nodig
+        #stap 3: Hou rekening met de breedte van onze hitbox, wijk vervolgens de hoek naar de speler beetje bij beetje af tot je een pad vindt om naast de muur te geraken
+        #stap 4: volg pad
+        vrije_zicht_punten = []
         center = self.last_seen_pos
         player_points = [ #MERK OP: als we later de playersize onafhankelijk maken van de TILESIZE dan zal dit hier ook moeten veranderd worden. Momenteel zijn hier gewoon geen aparte variabelen voor.
             vec(center) + vec(-TILESIZE, -TILESIZE), #linksboven
             vec(center) + vec(TILESIZE, -TILESIZE), #rechtsboven
             vec(center),
             vec(center) + vec(-TILESIZE, TILESIZE), #linksonder
-            vec(center) + vec(TILESIZE, TILESIZE), #rechtsboven
+            vec(center) + vec(TILESIZE, TILESIZE), #rechtsonder
         ]
 
         vrij_zicht = True
         for point in player_points:
             if not self.line_of_sight_clear(vec(self.rect.center), point) == True: #pas op, kan ook een muur returnen (nieuwe def)
                 vrij_zicht = False
-                muren_in_de_weg.append(self.line_of_sight_clear(vec(self.rect.center), point))
+            else:
+                vrije_zicht_punten.append(point)
+                #muren_in_de_weg.append(self.line_of_sight_clear(vec(self.rect.center), point))
 
         to_target = self.last_seen_pos - vec(self.rect.center)
         if vrij_zicht:
-            #achtervolg de speler direct: probeer misschien code over te nemen uit super()? lijn 197?
-            if to_target.length() > 0:
-                    move_dir = to_target.normalize()
-                    self.vel = move_dir * GUARD_SNELHEID_CHASE
-                    self.target_rot = move_dir.angle_to(vec(1, 0))
-                    self.move_and_collide()
-
-            if to_target.length() < 4:
-                self.state = "search"
-                self.search_start_time = pg.time.get_ticks()
-            #deze code wordt waarsch nog wat aangepast
-            pass
+           return to_target
 
         else: #we hebben geen vrij zicht op de laatst locatie van de speler
-            pass
+            #STAP 1: bepaal achter welke muur de spelercenter staat, pak de kant waarlangs we hem kunnen zien en meet hiervan de positie om exact langs de dichtbijzijnde kant van de muur te kunnen
+            
+            if self.line_of_sight_clear(vec(self.rect.center), vec(center)) != True:
+                relevante_muur = self.line_of_sight_clear(vec(self.rect.center), vec(center))
+            else:
+                for point in player_points:
+                    if not self.line_of_sight_clear(vec(self.rect.center), point) == True:
+                        relevante_muur = self.line_of_sight_clear(vec(self.rect.center), point)
+
+            breedte_muur_en_speler = TILESIZE/2 + TILESIZE/2 #NOTE: De eerste TILESIZE/2 staat voor de breedte van de muur, de tweede is die van de speler.
+            #om links of rechts te bepalen kijken we naar de hoek tussen de vectoren van de centra:
+            naar_muur = vec(relevante_muur.rect.center) - vec(self.rect.center)
+            hoekverschil = to_target.angle_to(naar_muur) if abs(to_target.angle_to(naar_muur)) < 180 else (360 - abs(to_target.angle_to(naar_muur)))*to_target.angle_to(naar_muur)/abs(to_target.angle_to(naar_muur))
+            #NOTE: angle_to() pakt de hoek tussen 2 vectoren zolang hij niet over het negatieve gedeelte van de x-as moet. Dus als de hoeken zich net wel langs de andere kant bevinden moeten we zien dat we dus toch gewoon de kleine hoek tussen hun 2 pakken (en behoud van teken).
+            #Als hoekverschil nu positief is dan moet onze guard naar links, anders naar rechts (vanuit zijn ogen)
+            richting = 'L' if hoekverschil > 0 else 'R'
+            #afhankelijk van onze positie t.o.v de muur moeten we eerst uitwijken voor zijn hoek of niet.
+            mogelijks_uitwijken = abs(self.rect.centerx - relevante_muur.rect.centerx) < breedte_muur_en_speler or abs(self.rect.centery - relevante_muur.rect.centery) < breedte_muur_en_speler
+
+            #dit zijn de punten rond onze muur waarlans we moeten passeren om zo vlot mogelijk met ons dik gat er rond te geraken:
+            keypoints_muur = [
+                naar_muur - (breedte_muur_en_speler,breedte_muur_en_speler), #linksboven (buiten muur)
+                naar_muur + (breedte_muur_en_speler, -breedte_muur_en_speler), #RB
+                naar_muur + (-breedte_muur_en_speler, breedte_muur_en_speler), #LO
+                naar_muur + (breedte_muur_en_speler, breedte_muur_en_speler) #RO
+            ]
+
+            keypoints_muur.sort(key=self.lengte_squared_vector)
+            hoek_dichtste_keypoint_en_target = 360 if keypoints_muur[0].magnitude_squared() == 0 else to_target.angle_to(keypoints_muur[0]) if abs(to_target.angle_to(keypoints_muur[0])) < 180 else (360 - abs(to_target.angle_to(keypoints_muur[0])))*to_target.angle_to(keypoints_muur[0])/abs(to_target.angle_to(keypoints_muur[0]))
+            #hoek tussen dichtste keypoint en target (perspectief: guard), neem 360 indien we op de keypoint staan (werkt goed voor volgende if statement)
+            al_voorbij_eerste_hoek = hoek_dichtste_keypoint_en_target > 90
+
+            #afhankelijk van dus de exacte positie moeten we slechts langs 1 of meerdere van deze punten om zo efficient mogelijk langs onze muur te glijden
+            #na wat testen blijkt dat we nog een laatste variabele nodig hebben voor wat uitzonderingen (zie voor jezelf wat er gebeurd als je deze weg haalt):
+            hoek_eerste_keypoint_en_center_muur = keypoints_muur[0].angle_to(naar_muur) if abs(keypoints_muur[0].angle_to(naar_muur)) < 180 else (360 - abs(keypoints_muur[0].angle_to(naar_muur)))*keypoints_muur[0].angle_to(naar_muur)/abs(keypoints_muur[0].angle_to(naar_muur))
+            eerste_keypoint_richting = 'L' if hoek_eerste_keypoint_en_center_muur > 0 else 'R' if hoek_eerste_keypoint_en_center_muur < 0 else "M"
+
+            if eerste_keypoint_richting != richting and not al_voorbij_eerste_hoek:
+                keypoints_muur[0], keypoints_muur[1] = keypoints_muur[1], keypoints_muur[0]
+
+            if mogelijks_uitwijken and not al_voorbij_eerste_hoek:
+                return keypoints_muur[0]
+            else:
+                hoek_tweede_keypoint_en_center_muur = keypoints_muur[1].angle_to(naar_muur) if abs(keypoints_muur[1].angle_to(naar_muur)) < 180 else (360 - abs(keypoints_muur[1].angle_to(naar_muur)))*keypoints_muur[1].angle_to(naar_muur)/abs(keypoints_muur[1].angle_to(naar_muur))
+                tweede_hoek_is_links = hoek_tweede_keypoint_en_center_muur > 0
+                return keypoints_muur[1] if richting == 'L' and tweede_hoek_is_links or richting == 'R' and not tweede_hoek_is_links else keypoints_muur[2]
 
     def line_of_sight_clear(self, start, end):
         delta = end - start
@@ -452,3 +561,10 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
                 if isinstance(wall, Wall) and wall.rect.colliderect(point_rect):
                     return wall
         return True
+    
+    def lengte_squared_vector(self, vector): #puur data verwerking, onderande gebruikt in move_and_dogde_walls
+        if type(vector) == pg.math.Vector2:
+            return vector.magnitude_squared()
+        else:
+            print(type(vector))
+            print(vector)
