@@ -410,7 +410,7 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
 
         muren_in_de_weg = []
         center = self.last_seen_pos
-        player_points = [ #MERK OP: als we later de playersize onafhankelijk maken van de TILESIZE dan zal dit hier ook moeten verandert worden. Momenteel zijn hier gewoon geen aparte variabelen voor.
+        player_points = [ #MERK OP: als we later de playersize onafhankelijk maken van de TILESIZE dan zal dit hier ook moeten veranderd worden. Momenteel zijn hier gewoon geen aparte variabelen voor.
             vec(center) + vec(-TILESIZE, -TILESIZE), #linksboven
             vec(center) + vec(TILESIZE, -TILESIZE), #rechtsboven
             vec(center),

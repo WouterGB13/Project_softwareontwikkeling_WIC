@@ -64,6 +64,8 @@ class Game:
                 elif tile == 'P':
                     self.player = Player(self, (col_idx, row_idx), GEEL)
                     self.entities.append(self.player)
+                elif tile == "C": #coordinate
+                    print(f"kolom {col_idx}, rij {row_idx}")
 
         # Plaats guards met hun patrouille-routes
         for route in self.dumb_guard_routes:
