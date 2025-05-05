@@ -26,6 +26,8 @@ class Game:
         self.entities = []      # Alle objecten (walls, player, guards)
         self.teller = 0          # Aantal keren dat speler game over ging
         self.button_rect = None  # Voor resetknop na game over
+        self.gameover_screen_drawn = False
+
 
     def create_clock(self): #VRAAG 1: waarom aparte functie?
         """Maakt de klok aan voor FPS control."""
@@ -53,6 +55,7 @@ class Game:
         self.entities.clear()
         self.walls = []
         self.load_data()
+        self.exits = []  # Voeg toe in __init__ of new()
 
         # Maak objecten aan volgens de kaartdata
         for row_idx, row in enumerate(self.kaart.data):
@@ -64,8 +67,16 @@ class Game:
                 elif tile == 'P':
                     self.player = Player(self, (col_idx, row_idx), GEEL)
                     self.entities.append(self.player)
-                elif tile == "C": #coordinate
+                elif tile == "C": #coordinaten in de map
                     print(f"kolom {col_idx}, rij {row_idx}")
+                elif tile == "E":
+                    exit_tile = Exit(self, (col_idx, row_idx))
+                    self.exits.append(exit_tile)
+                    self.entities.append(exit_tile)
+
+
+
+
 
         # Plaats guards met hun patrouille-routes
         for route in self.dumb_guard_routes:
@@ -87,7 +98,11 @@ class Game:
             self.dt = self.clock.tick(FPS) / 1000  # Delta time voor vloeiende beweging
             self.handle_events()
             if self.gameover:
-                self.draw_game_over_screen()
+                if not self.gameover_screen_drawn:
+                    self.draw_game_over_screen()
+                    self.gameover_screen_drawn = True
+
+
             else:
                 self.update()
                 self.draw()
@@ -111,14 +126,20 @@ class Game:
         """Update alle objecten en check botsingen."""
         for entity in self.entities:
             entity.update()
-
-        # Check of speler tegen een guard botst
-        for entity in self.entities:
             if isinstance(entity, Guard):
                 if self.player.rect.colliderect(entity.rect):
+                    print("Player rect:", self.player.rect)
                     self.gameover = True
                     self.teller += 1
                     print(f"Speler gepakt door guard! GAME OVER. {self.teller}e poging.") #VRAAG 3: doen we print weg?
+
+        # Check of speler het exit-vlak bereikt (moet buiten de lus)
+        for exit_tile in self.exits:
+            if self.player.rect.colliderect(exit_tile.rect):
+                if not self.gameover:
+                    print("Speler heeft een uitgang bereikt. GAME OVER (gewonnen).")
+                    self.gameover = True
+                    break
 
         # Update camera positie gebaseerd op speler
         self.camera.update(self.player)
@@ -133,6 +154,9 @@ class Game:
             self.screen.blit(entity.image, self.camera.apply(entity))
             if isinstance(entity, Guard):
                 entity.draw_view_field()  # Teken zichtveld van guards
+            if isinstance(entity, Exit):
+                entity.draw(self.screen, self.camera)
+
 
         pg.display.flip()
 
@@ -173,14 +197,40 @@ class Game:
 
         pg.display.flip()
 
-    def toon_startscherm(self):
-        """(Placeholder) Startscherm tonen."""
-        pass
+    def reset_game(self):
+        self.gameover = False
+        self.gameover_screen_drawn = False
+        self.new()
 
+    def toon_startscherm(self):
+        """Toont het startscherm vóór het spel begint."""
+        font_title = pg.font.SysFont(None, 72)
+        font_instructies = pg.font.SysFont(None, 36)
+
+        title_text = font_title.render("Welkom bij het WIC Ontsnappingsspel", True, WIT)
+        instructie_text = font_instructies.render("Druk op een toets om te starten", True, LICHTGRIJS)
+
+        title_rect = title_text.get_rect(center=(BREEDTE // 2, HOOGTE // 2 - 100))
+        instructie_rect = instructie_text.get_rect(center=(BREEDTE // 2, HOOGTE // 2 + 50))
+
+        # Wacht tot speler op een toets drukt
+        wachten = True
+        while wachten:
+            self.screen.fill(ZWART)
+            self.screen.blit(title_text, title_rect)
+            self.screen.blit(instructie_text, instructie_rect)
+            pg.display.flip()
+
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    wachten = False
+                    self.running = False
+                elif event.type == pg.KEYDOWN:
+                    wachten = False
 
 # --- Startpunt van het spel ---
 game = Game()
-game.toon_startscherm()
+#game.toon_startscherm()
 while game.running:
     game.run()
 

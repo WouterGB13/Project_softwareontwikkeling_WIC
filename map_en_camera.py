@@ -35,6 +35,10 @@ class Camera:
         """Verschuift entity-positie relatief aan camera."""
         return entity.rect.move(self.camera.topleft)
 
+    def apply_rect(self, rect: pg.Rect) -> pg.Rect:
+        """Verschuift een willekeurige rect (zoals voor tekst) relatief aan camera."""
+        return rect.move(self.camera.topleft)
+
     def update(self, target):
         """Camera volgt het opgegeven target (bv. speler)."""
         x: int = -target.rect.centerx + BREEDTE // 2
