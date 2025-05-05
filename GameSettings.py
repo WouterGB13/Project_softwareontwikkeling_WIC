@@ -31,6 +31,7 @@ GRIDHOOGTE = HOOGTE // TILESIZE    # aantal tegels verticaal
 
 # Speler instellingen
 SPELER_SNELHEID = 300  # pixels per seconde
+MAX_LIVES = 6
 
 # Guard instellingen
 GUARD_SNELHEID = 50  # patrol snelheid

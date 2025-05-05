@@ -116,9 +116,16 @@ class Game:
         for entity in self.entities:
             if isinstance(entity, Guard):
                 if self.player.rect.colliderect(entity.rect):
-                    self.gameover = True
-                    self.teller += 1
-                    print(f"Speler gepakt door guard! GAME OVER. {self.teller}e poging.") #VRAAG 3: doen we print weg?
+                    self.player.pos = vec(32*16,32*25)
+                    for entity in self.entities:
+                        if isinstance(entity, Guard):
+                            entity.reset()
+                    self.player.lives -= 1
+                    print(self.player.lives)
+                    if self.player.lives == 0:
+                        self.gameover = True
+                        self.teller += 1
+                        print(f"Speler gepakt door guard! GAME OVER. {self.teller}e poging.") #VRAAG 3: doen we print weg?
 
         # Update camera positie gebaseerd op speler
         self.camera.update(self.player)
@@ -133,6 +140,7 @@ class Game:
             self.screen.blit(entity.image, self.camera.apply(entity))
             if isinstance(entity, Guard):
                 entity.draw_view_field()  # Teken zichtveld van guards
+        self.draw_lives()
 
         pg.display.flip()
 
@@ -172,6 +180,27 @@ class Game:
         self.screen.blit(teller_text, teller_rect)
 
         pg.display.flip()
+
+    def draw_lives(self):
+        full_hearts = self.player.lives//2
+        half_hearts = self.player.lives%2
+        empty_hearts = int(MAX_LIVES/2 - full_hearts - half_hearts)
+        heart = pg.image.load("Full_Heart.png").convert_alpha()
+        heart = pg.transform.scale(heart,(64,64))
+        half_heart = pg.image.load("Half_Heart.png").convert_alpha()
+        half_heart = pg.transform.scale(half_heart,(64,64))
+        empty_heart = pg.image.load("Empty_Heart.png").convert_alpha()
+        empty_heart = pg.transform.scale(empty_heart,(64,64))
+        pos_life = [5,5]
+        for i in range(full_hearts):
+            self.screen.blit(heart,pos_life)
+            pos_life[0] += 69
+        for i in range(half_hearts):
+            self.screen.blit(half_heart,pos_life)
+            pos_life[0] += 69
+        for i in range(empty_hearts):
+            self.screen.blit(empty_heart,pos_life)
+            pos_life[0] += 69
 
     def toon_startscherm(self):
         """(Placeholder) Startscherm tonen."""

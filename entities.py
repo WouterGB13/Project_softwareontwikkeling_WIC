@@ -36,6 +36,7 @@ class Player(Entity):
         super().__init__(game, pos, color=color)
         self.vel = vec(0, 0)
         self.speed = SPELER_SNELHEID
+        self.lives = MAX_LIVES
 
     def get_keys(self):
         self.vel = vec(0, 0)
@@ -147,10 +148,33 @@ class Guard(BaseGuard):
         self.rotate_speed = ROTATE_SPEED
         self.vel = vec(0, 0)
 
+    def reset(self):
+        self.state = "patrol"
+        self.last_seen_pos = None
+        self.last_seen_time = 0
+        
+        # Vision instellingen vanuit GameSettings
+        self.view_angle_default = VISIE_BREEDTE
+        self.view_dist_default = VIEW_DIST
+        self.view_resolution = RESOLUTIE
+        
+        # Tijdens chase: smallere blik maar verder kijken
+        self.view_angle_chase = 30
+        self.view_dist_chase = self.view_dist_default * 1.5
+        
+        # Startwaarden
+        self.view_angle = self.view_angle_default
+        self.view_dist = self.view_dist_default
+        
+        self.search_time = SEARCH_TIME_MS
+        self.rot = 0
+        self.rotate_speed = ROTATE_SPEED
+        self.vel = vec(0, 0)
+
     def update(self):
         current_time = pg.time.get_ticks()
         
-
+        print(self.state)
         # ALTIJD detectie checken, maakt niet uit in welke state
         if self.detect_player():
             if self.state != "chase":
@@ -194,7 +218,6 @@ class Guard(BaseGuard):
             # Synchroniseer live tijdens achtervolging
             if self.state == "chase":
                 self.alert_nearby_guards()
-
             if self.last_seen_pos:
                 to_target = self.last_seen_pos - vec(self.rect.center)
                 if to_target.length() > 0:
@@ -401,7 +424,7 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
 
     def update(self):
         current_time = pg.time.get_ticks()
-        
+        print(self.pos)
 
         # ALTIJD detectie checken, maakt niet uit in welke state
         if self.detect_player():
@@ -446,7 +469,6 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
             # Synchroniseer live tijdens achtervolging
             if self.state == "chase":
                 self.alert_nearby_guards()
-
             if self.last_seen_pos:
                 #to_target = self.last_seen_pos - vec(self.rect.center)
                 to_target = self.move_and_dogde_walls()
