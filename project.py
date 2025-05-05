@@ -139,6 +139,13 @@ class Game:
                         self.gameover = True
                         self.teller += 1
                         print(f"Speler gepakt door guard! GAME OVER. {self.teller}e poging.") #VRAAG 3: doen we print weg?
+        
+        for exit_tile in self.exits:
+            if self.player.rect.colliderect(exit_tile.rect):
+                if not self.gameover:
+                    print("speler heeft de uitgang bereikt")
+                    self.exit_screen = True
+                    break
 
         # Update camera positie gebaseerd op speler
         self.camera.update(self.player)
@@ -265,11 +272,7 @@ class Game:
                         wachten = False
                         self.toon_startscherm()
 
-    def toon_startscherm(self):
-        """(Placeholder) Startscherm tonen."""
-        pass
-
-def draw_lives(self):
+    def draw_lives(self):
         full_hearts = self.player.lives//2
         half_hearts = self.player.lives%2
         empty_hearts = int(MAX_LIVES/2 - full_hearts - half_hearts)
