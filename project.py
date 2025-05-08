@@ -149,7 +149,6 @@ class Game:
                         if isinstance(entity, Guard):
                             entity.reset()
                     self.player.lives -= 1
-                    print(self.player.lives)
                     if self.player.lives == 0:
                         self.gameover = True
                         self.teller += 1
@@ -279,16 +278,6 @@ class Game:
 
         pg.display.flip()
 
-        wachten = True
-        while wachten:
-            for event in pg.event.get():
-                if event.type == pg.QUIT:
-                    wachten = False
-                    self.running = False
-                elif event.type == pg.MOUSEBUTTONDOWN:
-                    if button_rect.collidepoint(event.pos):
-                        wachten = False
-                        self.toon_startscherm()
 
     def draw_lives(self):
         full_hearts = self.player.lives//2
