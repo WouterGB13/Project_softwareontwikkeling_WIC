@@ -631,7 +631,7 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
             else:
                 for point in player_points:
                     if not self.line_of_sight_clear(vec(self.rect.center), vec(point)) == True:
-                        relevante_muur = self.line_of_sight_clear(vec(self.rect.center), point)
+                        relevante_muur = self.line_of_sight_clear(vec(self.rect.center), vec(point))
 
             breedte_muur_en_speler = TILESIZE/2 + TILESIZE/2 #NOTE: De eerste TILESIZE/2 staat voor de breedte van de muur, de tweede is die van de speler.
             #om links of rechts te bepalen kijken we naar de hoek tussen de vectoren van de centra:
