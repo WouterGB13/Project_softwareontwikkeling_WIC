@@ -413,12 +413,13 @@ class Guard(BaseGuard):
             # if muur != True: #volgende code komt vooral uit line_of_sight_clear():
             #     point = self.get_point_at_wall(center, point, muur, steps)
                 #print(point)
-            if not self.first_load:
-                punt = self.line_of_sight_clear(center, point)
-                if punt != True: #volgende code komt vooral uit line_of_sight_clear():
-                    point = punt
-            else:
-                self.first_load = False                            
+
+            # if not self.first_load:
+            #     punt = self.line_of_sight_clear(center, point)
+            #     if punt != True: #volgende code komt vooral uit line_of_sight_clear():
+            #         point = punt
+            # else:
+            #     self.first_load = False                            
 
             points.append(point)
         kleur = LICHTROOD if self.state == "chase" else ZWART
@@ -631,7 +632,7 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
                 relevante_muur = self.line_of_sight_clear(vec(self.rect.center), vec(center))
             else:
                 for point in player_points:
-                    if not self.line_of_sight_clear(vec(self.rect.center), point) == True:
+                    if not self.line_of_sight_clear(vec(self.rect.center), vec(point)) == True:
                         relevante_muur = self.line_of_sight_clear(vec(self.rect.center), point)
 
             breedte_muur_en_speler = TILESIZE/2 + TILESIZE/2 #NOTE: De eerste TILESIZE/2 staat voor de breedte van de muur, de tweede is die van de speler.

@@ -34,7 +34,7 @@ class Game:
 
     def load_data(self):
         """Laad de kaart en de routes van de guards."""
-        self.kaart = Map('Kaart2.txt')  # Laad map layout uit tekstbestand
+        self.kaart = Map('p_gebouwen.txt')  # Laad map layout uit tekstbestand
         self.dumb_guard_routes = []
         self.smart_guard_routes = []
 
