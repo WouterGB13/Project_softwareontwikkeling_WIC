@@ -350,15 +350,14 @@ class Guard(BaseGuard):
         return False  # geen enkele hoek voldeed
 
     def line_of_sight_clear(self, start, end):
-        delta = end - start
-        steps = int(delta.length() // 4)  # elke 4 pixels een check
-        for i in range(1, steps + 1):
-            point = start + delta * (i / steps)
-            point_rect = pg.Rect(point.x, point.y, 2, 2)
-            for wall in self.game.entities:
-                if isinstance(wall, Wall) and wall.rect.colliderect(point_rect):
-                    return wall
+        #https://www.pygame.org/docs/ref/rect.html#pygame.Rect.clipline
+        for wall in self.game.walls:
+            clipline = wall.rect.clipline(start, end)
+            if clipline:
+                start, end = clipline
+                return start
         return True
+    
 
     def alert_nearby_guards(self):
         for entity in self.game.entities:
@@ -406,7 +405,6 @@ class Guard(BaseGuard):
     def draw_view_field(self):
         center = vec(self.rect.center) + vec(self.game.camera.camera.topleft)
         points = [center]
-        steps = int(self.view_dist // (TILESIZE/2))
         for i in range(self.view_resolution + 1):
             angle = (-self.view_angle + 2 * self.view_angle * (i / self.view_resolution))
             point = center + vec(self.view_dist, 0).rotate(-(self.rot + angle))
@@ -416,50 +414,16 @@ class Guard(BaseGuard):
             # if muur != True: #volgende code komt vooral uit line_of_sight_clear():
             #     point = self.get_point_at_wall(center, point, muur, steps)
                 #print(point)
-                            
+            if ADAPTIVE_CONES:
+                punt = self.line_of_sight_clear(center, point)
+                if punt != True: #volgende code komt vooral uit line_of_sight_clear():
+                    point = punt                        
 
             points.append(point)
         kleur = LICHTROOD if self.state == "chase" else ZWART
         # for point in points: #laat deze code even staan: nodig voor debugging
         #     pg.draw.circle(self.game.screen, ROOD, point, 4)
         pg.draw.polygon(self.game.screen, kleur, points, 2)
-
-
-    def get_point_at_wall(self, start, end, wall, steps):
-        #vector = vec(1,0).rotate(-(self.rot + angle))*(TILESIZE - 1) #Tilesize-1 zodat we de muur nooit kunnen missen
-        # minus_delta = start - end
-        # alpha = minus_delta.angle_to((0,0))
-        # x, y = 1, 1
-        # if not alpha < 45 and alpha < 135:
-        #     x = ((180-alpha)/(45))-2
-        # elif not alpha < 135 and alpha < 225:
-        #     x = -1
-        #     y = ((270-alpha)/(45))-2
-        # elif not alpha < 225 and alpha < 315:
-        #     y = -1
-        #     x = ((alpha)/(45))-6
-        # elif not alpha < 315 and alpha < 360:
-        #     y = ((alpha+90)/(45))-9
-        # else:
-        #     y = ((alpha+90)/(45))-2
-
-        # # if abs(x) > 1 or abs(y) > 1:
-        # #     return None
-        # x *= TILESIZE
-        # y *= TILESIZE
-        # a = ([x,y])
-        # return ([wall.rect.x + x, wall.rect.y + y])
-
-        delta = end - start
-        for i in range(1, steps + 1):
-            punt = start + delta * (i / steps)
-            point_rect = pg.Rect(punt.x, punt.y, 2, 2)
-            if wall.rect.colliderect(point_rect):
-                return punt
-        return punt
-        
-
-
 
 
 
@@ -666,7 +630,7 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
                 relevante_muur = self.line_of_sight_clear(vec(self.rect.center), vec(center))
             else:
                 for point in player_points:
-                    if not self.line_of_sight_clear(vec(self.rect.center), point) == True:
+                    if not self.line_of_sight_clear(vec(self.rect.center), vec(point)) == True:
                         relevante_muur = self.line_of_sight_clear(vec(self.rect.center), point)
 
             breedte_muur_en_speler = TILESIZE/2 + TILESIZE/2 #NOTE: De eerste TILESIZE/2 staat voor de breedte van de muur, de tweede is die van de speler.
@@ -707,16 +671,6 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
                 tweede_hoek_is_links = hoek_tweede_keypoint_en_center_muur > 0
                 return keypoints_muur[1] if richting == 'L' and tweede_hoek_is_links or richting == 'R' and not tweede_hoek_is_links else keypoints_muur[2]
 
-    def line_of_sight_clear(self, start, end):
-        delta = end - start
-        steps = int(delta.length() // 4)  # elke 4 pixels een check
-        for i in range(1, steps + 1):
-            point = start + delta * (i / steps)
-            point_rect = pg.Rect(point.x, point.y, 2, 2)
-            for wall in self.game.entities:
-                if isinstance(wall, Wall) and wall.rect.colliderect(point_rect):
-                    return wall
-        return True
     
     def lengte_squared_vector(self, vector): #puur data verwerking, onderande gebruikt in move_and_dogde_walls
         if type(vector) == pg.math.Vector2:
