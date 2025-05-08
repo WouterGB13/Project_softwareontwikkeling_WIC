@@ -53,6 +53,9 @@ RESOLUTIE = 10  # hoeveelheid straal-lijnen in zichtveld (hoger = gedetailleerde
 # Search & Chase timers (in milliseconden)
 SEARCH_TIME_MS = 10000  # zoektijd na speler uit zicht
 CHASE_TIME_MS = 0  # niet gebruikt momenteel
+STUCK_DISTANCE_THRESHOLD = 1.5  # pixels
+STUCK_TIME_LIMIT = 2000  # milliseconden (2 seconden)
+CHASE_TIMEOUT = 3000  # milliseconden (3 seconden)
 
 #trap
 cooldown_time = 3000  # tijd tussen het activeren van de trap en het kunnen gebruiken van de trap (in milliseconden)
