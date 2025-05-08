@@ -15,9 +15,6 @@ class Map:
             for row_idx, line in enumerate(map_file):
                 clean_line = line.strip()
                 self.data.append(clean_line)
-                for col_idx, char in enumerate(clean_line):
-                    if char.isalpha() and char.upper() != 'P': #is dit nog nodig? het lijkt mij een overblijfsel van toen we guards in de map zelf zetten?
-                        self.guard_waypoints_map.setdefault(char, []).append((col_idx, row_idx))
 
         if self.data:
             self.tileBREEDTE: int = len(self.data[0])
@@ -37,6 +34,10 @@ class Camera:
     def apply(self, entity) -> pg.Rect:
         """Verschuift entity-positie relatief aan camera."""
         return entity.rect.move(self.camera.topleft)
+
+    def apply_rect(self, rect: pg.Rect) -> pg.Rect:
+        """Verschuift een willekeurige rect (zoals voor tekst) relatief aan camera."""
+        return rect.move(self.camera.topleft)
 
     def update(self, target):
         """Camera volgt het opgegeven target (bv. speler)."""

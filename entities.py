@@ -25,7 +25,74 @@ class Wall(Entity):
     def __init__(self, game, pos):
         super().__init__(game, pos, color=GROEN)
 
+class Exit:
+    def __init__(self, game, pos):
+        self.game = game
+        self.x, self.y = pos
+        self.image = pg.Surface((TILESIZE, TILESIZE), pg.SRCALPHA)
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (self.x * TILESIZE, self.y * TILESIZE)
+
+    def update(self):
+        pass  # geen beweging
+
+    def draw(self, screen, camera):
+        font = pg.font.SysFont(None, 20)
+        text = font.render("EXIT", True, ROOD)
+        screen_pos = camera.apply_rect(self.rect)
+        text_rect = text.get_rect(center=screen_pos.center)
+        screen.blit(text, text_rect)
+
 class Trap(Entity):
+    def __init__(self, game, pos):
+        super().__init__(game, pos, color=DONKERGRIJS)
+        self.activated = False
+        self.cooldown_time = cooldown_time
+        self.last_triggered = 0
+
+    def trigger_trap(self):
+        current_time = pg.time.get_ticks()
+        if self.activated and current_time - self.last_triggered < self.cooldown_time:
+            return  # Trap zit nog in cooldown
+
+        # 1. Stun de speler
+        self.game.player.stunned = True
+        self.game.player.stun_start_time = current_time
+        self.game.player.stun_duration = 2000  # 2 seconden
+
+        # 2. Waarschuw guards in de buurt
+        for entity in self.game.entities:
+            if isinstance(entity, Guard):
+                distance = self.pos.distance_to(entity.pos)
+                if distance < ALERT_DISTANCE:
+                    entity.state = "chase_help"
+                    entity.last_seen_pos = vec(self.game.player.rect.center)
+
+        # Cooldown instellen
+        self.activated = True
+        self.last_triggered = current_time
+
+    def update(self):
+        # Kijk of speler over de trap loopt
+        if self.rect.colliderect(self.game.player.rect):
+            self.trigger_trap()
+
+        # Reset cooldown na verloop van tijd
+        if self.activated and pg.time.get_ticks() - self.last_triggered >= self.cooldown_time:
+            self.activated = False
+
+class Energie(Entity):
+    pass
+
+class Stunn(Entity):
+    pass
+class Caught(Entity):
+    pass
+
+class Bag(Entity):
+    pass
+
+class Backpack(Entity):
     pass
 
 class Item(Entity):
@@ -36,6 +103,10 @@ class Player(Entity):
         super().__init__(game, pos, color=color)
         self.vel = vec(0, 0)
         self.speed = SPELER_SNELHEID
+        self.stunned = False
+        self.stun_start_time = 0
+        self.stun_duration = 0
+        self.lives = MAX_LIVES
 
     def get_keys(self):
         self.vel = vec(0, 0)
@@ -79,6 +150,13 @@ class Player(Entity):
 
     def update(self):
         self.get_keys()
+        current_time = pg.time.get_ticks()
+        if self.stunned:
+            if current_time - self.stun_start_time < self.stun_duration:
+                self.vel = vec(0, 0)
+                return  # speler kan tijdelijk niks doen
+            else:
+                self.stunned = False
 
         # Eerst X-beweging
         self.pos.x += self.vel.x * self.game.dt
@@ -147,10 +225,33 @@ class Guard(BaseGuard):
         self.rotate_speed = ROTATE_SPEED
         self.vel = vec(0, 0)
 
+    def reset(self):
+        self.state = "patrol"
+        self.last_seen_pos = None
+        self.last_seen_time = 0
+        
+        # Vision instellingen vanuit GameSettings
+        self.view_angle_default = VISIE_BREEDTE
+        self.view_dist_default = VIEW_DIST
+        self.view_resolution = RESOLUTIE
+        
+        # Tijdens chase: smallere blik maar verder kijken
+        self.view_angle_chase = 30
+        self.view_dist_chase = self.view_dist_default * 1.5
+        
+        # Startwaarden
+        self.view_angle = self.view_angle_default
+        self.view_dist = self.view_dist_default
+        
+        self.search_time = SEARCH_TIME_MS
+        self.rot = 0
+        self.rotate_speed = ROTATE_SPEED
+        self.vel = vec(0, 0)
+
     def update(self):
         current_time = pg.time.get_ticks()
         
-
+        print(self.state)
         # ALTIJD detectie checken, maakt niet uit in welke state
         if self.detect_player():
             if self.state != "chase":
@@ -194,7 +295,6 @@ class Guard(BaseGuard):
             # Synchroniseer live tijdens achtervolging
             if self.state == "chase":
                 self.alert_nearby_guards()
-
             if self.last_seen_pos:
                 to_target = self.last_seen_pos - vec(self.rect.center)
                 if to_target.length() > 0:
@@ -455,7 +555,7 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
 
     def update(self):
         current_time = pg.time.get_ticks()
-        
+        print(self.pos)
 
         # ALTIJD detectie checken, maakt niet uit in welke state
         if self.detect_player():
@@ -500,7 +600,6 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
             # Synchroniseer live tijdens achtervolging
             if self.state == "chase":
                 self.alert_nearby_guards()
-
             if self.last_seen_pos:
                 #to_target = self.last_seen_pos - vec(self.rect.center)
                 to_target = self.move_and_dogde_walls()
@@ -537,7 +636,7 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
         #stap 4: volg pad
         vrije_zicht_punten = []
         center = self.last_seen_pos
-        player_points = [ #MERK OP: als we later de playersize onafhankelijk maken van de TILESIZE dan zal dit hier ook moeten verandert worden. Momenteel zijn hier gewoon geen aparte variabelen voor.
+        player_points = [ #MERK OP: als we later de playersize onafhankelijk maken van de TILESIZE dan zal dit hier ook moeten veranderd worden. Momenteel zijn hier gewoon geen aparte variabelen voor.
             vec(center) + vec(-TILESIZE, -TILESIZE), #linksboven
             vec(center) + vec(TILESIZE, -TILESIZE), #rechtsboven
             vec(center),
