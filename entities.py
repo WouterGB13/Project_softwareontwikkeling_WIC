@@ -176,7 +176,10 @@ class BaseGuard(Entity): #Ik zou kiezen tussen of de historiek laten of met bran
         self.route = route
         self.checkpoint = 0
         self.speed = GUARD_SNELHEID
-        self.target = vec(self.route[1]) * TILESIZE
+        try:
+            self.target = vec(self.route[1]) * TILESIZE
+        except IndexError:
+            self.target = vec(self.route[0]) * TILESIZE
         self.target_rot = 0
 
     def navigate(self, start, end):
