@@ -84,8 +84,9 @@ class Trap(Entity):
 class Energie(Entity):
     pass
 
-class Stunn(Entity):
+class Stun(Entity):
     pass
+
 class Caught(Entity):
     pass
 
@@ -422,8 +423,6 @@ class Guard(BaseGuard):
         #     pg.draw.circle(self.game.screen, ROOD, point, 4)
         pg.draw.polygon(self.game.screen, kleur, points, 2)
 
-
-
 class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad IS AF, PROBLEEM MET RESUME ROUTE WORDT VEROORZAAKT DOOR ALGEMENE NAVIGATIECODE
     #DO NOT TOUCH ZONDER OVERLEGGEN
 
@@ -461,7 +460,8 @@ class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad IS AF, PROBL
         # Gedrag gebaseerd op state
         if self.state == "patrol":
             if self.checkretreat() == True:
-                self.next_cp = self.target
+                self.next_target = self.target.copy()
+                self.current_checkpoint = (self.checkpoint)
                 self.target = self.retreat_path[-1]
             move_dir = self.navigate(self.pos, self.target)
             self.view_angle = self.view_angle_default
@@ -472,14 +472,19 @@ class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad IS AF, PROBL
                 self.move_and_collide()
 
             if self.at_checkpoint():
-                self.checkpoint = (self.checkpoint + 1) % len(self.route)
-                self.target = vec(self.route[(self.checkpoint + 1) % len(self.route)]) * TILESIZE
                 if len(self.retreat_path) != 0:
                     self.retreat_path.pop(-1)
                     if len(self.retreat_path) >= 1: #anders een error "list index out of range"
                         self.target = self.retreat_path[-1]
+                        print(self.current_checkpoint,self.checkpoint)
                     else: 
-                        self.target = self.next_cp #resume origineel pad
+                        self.target = self.next_target #resume origineel pad
+                        self.checkpoint = self.current_checkpoint - 1 # -1 want anders wordt checkpoint overgeslaan
+                        print(self.current_checkpoint,self.checkpoint)
+                else:        
+                    self.checkpoint = (self.checkpoint + 1) % len(self.route)
+                    print(self.checkpoint)
+                    self.target = vec(self.route[(self.checkpoint + 1) % len(self.route)]) * TILESIZE
 
         elif self.state == "chase" or self.state == "chase_help":
             if self.detect_player():
