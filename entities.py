@@ -354,9 +354,9 @@ class Guard(BaseGuard):
         for wall in self.game.walls:
             clipline = wall.rect.clipline(start, end)
             if clipline:
-                start, end = clipline
-                return start
-        return True
+                return wall  # geef het Wall object terug
+        return True  # vrije zichtlijn
+
     
 
     def alert_nearby_guards(self):
@@ -635,6 +635,10 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
 
             breedte_muur_en_speler = TILESIZE/2 + TILESIZE/2 #NOTE: De eerste TILESIZE/2 staat voor de breedte van de muur, de tweede is die van de speler.
             #om links of rechts te bepalen kijken we naar de hoek tussen de vectoren van de centra:
+            if not hasattr(relevante_muur, "rect"):
+                print("⚠️ Geen geldige muur gevonden! Line-of-sight gaf tuple of ongeldige data terug.")
+                return to_target  # fallback naar standaardrichting
+
             naar_muur = vec(relevante_muur.rect.center) - vec(self.rect.center)
             hoekverschil = to_target.angle_to(naar_muur) if abs(to_target.angle_to(naar_muur)) < 180 else (360 - abs(to_target.angle_to(naar_muur)))*to_target.angle_to(naar_muur)/abs(to_target.angle_to(naar_muur))
             #NOTE: angle_to() pakt de hoek tussen 2 vectoren zolang hij niet over het negatieve gedeelte van de x-as moet. Dus als de hoeken zich net wel langs de andere kant bevinden moeten we zien dat we dus toch gewoon de kleine hoek tussen hun 2 pakken (en behoud van teken).
