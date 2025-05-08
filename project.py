@@ -87,6 +87,7 @@ class Game:
     def run(self):
         """Hoofdloop: verwerkt input, updates en tekent frames."""
         self.new()
+        self.escape()
         self.playing = True
         while self.playing:
             self.dt = self.clock.tick(FPS) / 1000  # Delta time voor vloeiende beweging
@@ -108,20 +109,34 @@ class Game:
             if event.type == pg.QUIT:
                 self.playing = False
                 self.running = False
-            elif event.type == pg.MOUSEBUTTONDOWN and self.gameover and self.button_rect:
-                if self.button_rect.collidepoint(event.pos):
-                    self.reset_game()
+                pg.quit()
+                exit()
+
             elif event.type == pg.KEYDOWN:
+                if event.key == pg.K_ESCAPE:
+                    self.playing = False
+                    self.running = False
+                    pg.quit()
+                    exit()
+
                 if self.exit_screen:
-                    self.exit_screen = False  # Reset het exit-scherm
-                    self.toon_startscherm()  # Terug naar het startscherm
+                    self.exit_screen = False
+                    self.toon_startscherm()
                 elif self.gameover:
                     self.reset_game()
 
-        keys = pg.key.get_pressed()
-        if keys[pg.K_ESCAPE]:
-            pg.quit()
-            exit()
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                if self.gameover and self.button_rect and self.button_rect.collidepoint(event.pos):
+                    self.reset_game()
+
+    def escape(self):
+        """Verwerkt Escape-toets en sluiten via vensterkruisje (universeel toepasbaar)."""
+        for event in pg.event.get():
+            if event.type == pg.QUIT or (event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE):
+                self.running = False
+                self.playing = False
+                pg.quit()
+                exit()
 
     def update(self):
         """Update alle objecten en check botsingen."""
@@ -184,19 +199,31 @@ class Game:
         font_title = pg.font.SysFont(None, 72)
         font_button = pg.font.SysFont(None, 48)
 
-        title_text = font_title.render("Welkom bij het WIC Ontsnappingsspel", True, WIT)
-        title_rect = title_text.get_rect(center=(BREEDTE // 2, HOOGTE // 2 - 100))
+        # ⛓️ Gesplitste titel
+        title_lines = ["METAL GEAR SOLID V(UB):", "THE PHANTOM KATER"]
+        title_surfs = [font_title.render(line, True, WIT) for line in title_lines]
+        
+        # Y-coördinaat startpositie
+        start_y = HOOGTE // 2 - 140
+        title_rects = [
+            surf.get_rect(center=(BREEDTE // 2, start_y + i * 80))
+            for i, surf in enumerate(title_surfs)
+        ]
 
-        # Tekst voor de startknop
+        # Startknop
         button_text = font_button.render("Klik om te starten", True, WIT)
-        button_rect = button_text.get_rect(center=(BREEDTE // 2, HOOGTE // 2 + 50))
+        button_rect = button_text.get_rect(center=(BREEDTE // 2, HOOGTE // 2 + 80))
 
-        # Wacht tot speler op de knop klikt
         wachten = True
         while wachten:
             self.screen.fill(ZWART)
-            self.screen.blit(title_text, title_rect)
-            pg.draw.rect(self.screen, ROOD, button_rect.inflate(20, 20))  # Knop achtergrond
+
+            # Titelregels tekenen
+            for surf, rect in zip(title_surfs, title_rects):
+                self.screen.blit(surf, rect)
+
+            # Knop
+            pg.draw.rect(self.screen, ROOD, button_rect.inflate(20, 20))
             self.screen.blit(button_text, button_rect)
             pg.display.flip()
 
@@ -207,26 +234,23 @@ class Game:
                 elif event.type == pg.MOUSEBUTTONDOWN:
                     if button_rect.collidepoint(event.pos):
                         wachten = False
-                        self.reset_game()  # Begin een nieuw spel
+                        self.reset_game()
+
 
     def draw_game_over_screen(self):
-        """Teken het Game Over scherm met resetknop."""
         self.screen.fill(ZWART)
 
-        # Tekst: "GAME OVER"
         font_large = pg.font.SysFont(None, 72)
         text_surface = font_large.render("GAME OVER", True, ROOD)
         text_rect = text_surface.get_rect(center=(BREEDTE // 2, HOOGTE // 2 - 100))
         self.screen.blit(text_surface, text_rect)
 
-        # Herstart-knop
         font_button = pg.font.SysFont(None, 48)
         button_text = font_button.render("Klik om te herstarten", True, WIT)
         self.button_rect = button_text.get_rect(center=(BREEDTE // 2, HOOGTE // 2 + 50))
-        pg.draw.rect(self.screen, ROOD, self.button_rect.inflate(20, 20))  # Knop achtergrond
+        pg.draw.rect(self.screen, ROOD, self.button_rect.inflate(20, 20))
         self.screen.blit(button_text, self.button_rect)
 
-        # Pogingenteller
         font_teller = pg.font.SysFont(None, 45)
         teller_text = font_teller.render(f"Aantal pogingen: {self.teller}", True, WIT)
         teller_rect = teller_text.get_rect(center=(BREEDTE // 2, HOOGTE // 2 + 150))
@@ -235,28 +259,22 @@ class Game:
         pg.display.flip()
 
     def draw_exit_screen(self):
-        """Teken het Exit scherm na het verlaten van de map via de exit."""
-        self.screen.fill(GROEN)  # Aangepaste kleur voor exit-scherm
+        self.screen.fill(GROEN)
 
-        # Tekst: "EXIT BEHAALD"
         font_large = pg.font.SysFont(None, 72)
         text_surface = font_large.render("EXIT BEHAALD!", True, WIT)
         text_rect = text_surface.get_rect(center=(BREEDTE // 2, HOOGTE // 2 - 100))
         self.screen.blit(text_surface, text_rect)
 
-        # Weergeven van pogingen
         font_teller = pg.font.SysFont(None, 45)
         teller_text = font_teller.render(f"Aantal pogingen: {self.teller}", True, WIT)
         teller_rect = teller_text.get_rect(center=(BREEDTE // 2, HOOGTE // 2 + 100))
         self.screen.blit(teller_text, teller_rect)
 
-        # Tekst voor de terug-knop
         font_button = pg.font.SysFont(None, 48)
         button_text = font_button.render("Klik om terug te keren naar het startscherm", True, WIT)
         button_rect = button_text.get_rect(center=(BREEDTE // 2, HOOGTE // 2 + 200))
-
-        # Tekenen van de knop
-        pg.draw.rect(self.screen, ROOD, button_rect.inflate(20, 20))  # Knop achtergrond
+        pg.draw.rect(self.screen, ROOD, button_rect.inflate(20, 20))
         self.screen.blit(button_text, button_rect)
 
         pg.display.flip()

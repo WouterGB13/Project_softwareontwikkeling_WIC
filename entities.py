@@ -84,8 +84,9 @@ class Trap(Entity):
 class Energie(Entity):
     pass
 
-class Stunn(Entity):
+class Stun(Entity):
     pass
+
 class Caught(Entity):
     pass
 
@@ -353,9 +354,9 @@ class Guard(BaseGuard):
         for wall in self.game.walls:
             clipline = wall.rect.clipline(start, end)
             if clipline:
-                start, end = clipline
-                return start
-        return True
+                return wall  # geef het Wall object terug
+        return True  # vrije zichtlijn
+
     
 
     def alert_nearby_guards(self):
@@ -428,8 +429,6 @@ class Guard(BaseGuard):
         #     pg.draw.circle(self.game.screen, ROOD, point, 4)
         pg.draw.polygon(self.game.screen, kleur, points, 2)
 
-
-
 class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad IS AF, PROBLEEM MET RESUME ROUTE WORDT VEROORZAAKT DOOR ALGEMENE NAVIGATIECODE
     #DO NOT TOUCH ZONDER OVERLEGGEN
 
@@ -467,7 +466,8 @@ class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad IS AF, PROBL
         # Gedrag gebaseerd op state
         if self.state == "patrol":
             if self.checkretreat() == True:
-                self.next_cp = self.target
+                self.next_target = self.target.copy()
+                self.current_checkpoint = (self.checkpoint)
                 self.target = self.retreat_path[-1]
             move_dir = self.navigate(self.pos, self.target)
             self.view_angle = self.view_angle_default
@@ -478,14 +478,19 @@ class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad IS AF, PROBL
                 self.move_and_collide()
 
             if self.at_checkpoint():
-                self.checkpoint = (self.checkpoint + 1) % len(self.route)
-                self.target = vec(self.route[(self.checkpoint + 1) % len(self.route)]) * TILESIZE
                 if len(self.retreat_path) != 0:
                     self.retreat_path.pop(-1)
                     if len(self.retreat_path) >= 1: #anders een error "list index out of range"
                         self.target = self.retreat_path[-1]
+                        print(self.current_checkpoint,self.checkpoint)
                     else: 
-                        self.target = self.next_cp #resume origineel pad
+                        self.target = self.next_target #resume origineel pad
+                        self.checkpoint = self.current_checkpoint - 1 # -1 want anders wordt checkpoint overgeslaan
+                        print(self.current_checkpoint,self.checkpoint)
+                else:        
+                    self.checkpoint = (self.checkpoint + 1) % len(self.route)
+                    print(self.checkpoint)
+                    self.target = vec(self.route[(self.checkpoint + 1) % len(self.route)]) * TILESIZE
 
         elif self.state == "chase" or self.state == "chase_help":
             if self.detect_player():
@@ -639,15 +644,19 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
     #                 if not self.line_of_sight_clear(vec(self.rect.center), vec(point)) == True:
     #                     relevante_muur = self.line_of_sight_clear(vec(self.rect.center), vec(point))
 
-    #         breedte_muur_en_speler = TILESIZE/2 + TILESIZE/2 #NOTE: De eerste TILESIZE/2 staat voor de breedte van de muur, de tweede is die van de speler.
-    #         #om links of rechts te bepalen kijken we naar de hoek tussen de vectoren van de centra:
-    #         naar_muur = vec(relevante_muur.rect.center) - vec(self.rect.center)
-    #         hoekverschil = to_target.angle_to(naar_muur) if abs(to_target.angle_to(naar_muur)) < 180 else (360 - abs(to_target.angle_to(naar_muur)))*to_target.angle_to(naar_muur)/abs(to_target.angle_to(naar_muur))
-    #         #NOTE: angle_to() pakt de hoek tussen 2 vectoren zolang hij niet over het negatieve gedeelte van de x-as moet. Dus als de hoeken zich net wel langs de andere kant bevinden moeten we zien dat we dus toch gewoon de kleine hoek tussen hun 2 pakken (en behoud van teken).
-    #         #Als hoekverschil nu positief is dan moet onze guard naar links, anders naar rechts (vanuit zijn ogen)
-    #         richting = 'L' if hoekverschil > 0 else 'R'
-    #         #afhankelijk van onze positie t.o.v de muur moeten we eerst uitwijken voor zijn hoek of niet.
-    #         mogelijks_uitwijken = abs(self.rect.centerx - relevante_muur.rect.centerx) < breedte_muur_en_speler or abs(self.rect.centery - relevante_muur.rect.centery) < breedte_muur_en_speler
+            breedte_muur_en_speler = TILESIZE/2 + TILESIZE/2 #NOTE: De eerste TILESIZE/2 staat voor de breedte van de muur, de tweede is die van de speler.
+            #om links of rechts te bepalen kijken we naar de hoek tussen de vectoren van de centra:
+            if not hasattr(relevante_muur, "rect"):
+                print("⚠️ Geen geldige muur gevonden! Line-of-sight gaf tuple of ongeldige data terug.")
+                return to_target  # fallback naar standaardrichting
+
+            naar_muur = vec(relevante_muur.rect.center) - vec(self.rect.center)
+            hoekverschil = to_target.angle_to(naar_muur) if abs(to_target.angle_to(naar_muur)) < 180 else (360 - abs(to_target.angle_to(naar_muur)))*to_target.angle_to(naar_muur)/abs(to_target.angle_to(naar_muur))
+            #NOTE: angle_to() pakt de hoek tussen 2 vectoren zolang hij niet over het negatieve gedeelte van de x-as moet. Dus als de hoeken zich net wel langs de andere kant bevinden moeten we zien dat we dus toch gewoon de kleine hoek tussen hun 2 pakken (en behoud van teken).
+            #Als hoekverschil nu positief is dan moet onze guard naar links, anders naar rechts (vanuit zijn ogen)
+            richting = 'L' if hoekverschil > 0 else 'R'
+            #afhankelijk van onze positie t.o.v de muur moeten we eerst uitwijken voor zijn hoek of niet.
+            mogelijks_uitwijken = abs(self.rect.centerx - relevante_muur.rect.centerx) < breedte_muur_en_speler or abs(self.rect.centery - relevante_muur.rect.centery) < breedte_muur_en_speler
 
     #         #dit zijn de punten rond onze muur waarlans we moeten passeren om zo vlot mogelijk met ons dik gat er rond te geraken:
     #         keypoints_muur = [
