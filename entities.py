@@ -125,8 +125,8 @@ class Player(Entity):
             self.vel *= math.sqrt(2) / 2
 
     def collide_with_walls(self, direction):
-        for wall in self.game.entities:
-            if isinstance(wall, Wall) and self.rect.colliderect(wall.rect):
+        for wall in self.game.walls:
+            if self.rect.colliderect(wall.rect):
                 if direction == 'x':
                     if self.vel.x > 0:
                         self.pos.x = wall.rect.left - self.rect.width
@@ -385,8 +385,8 @@ class Guard(BaseGuard):
         self.collide_with_walls('y')
 
     def collide_with_walls(self, direction):
-        for wall in self.game.entities:
-            if isinstance(wall, Wall) and self.rect.colliderect(wall.rect):
+        for wall in self.game.walls:
+            if self.rect.colliderect(wall.rect):
                 if direction == 'x':
                     if self.vel.x > 0:
                         self.pos.x = wall.rect.left - self.rect.width

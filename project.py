@@ -61,7 +61,6 @@ class Game:
                 if tile == '1':
                     wall = Wall(self, (col_idx, row_idx))
                     self.walls.append(wall)
-                    self.entities.append(wall)
                 elif tile == 'P':
                     self.player = Player(self, (col_idx, row_idx), GEEL)
                     self.entities.append(self.player)
@@ -70,7 +69,6 @@ class Game:
                 elif tile == "E":
                     exit_tile = Exit(self, (col_idx, row_idx))
                     self.exits.append(exit_tile)
-                    self.entities.append(exit_tile)
 
         # Plaats guards met hun patrouille-routes
         for route in self.dumb_guard_routes:
@@ -173,6 +171,13 @@ class Game:
             self.screen.blit(entity.image, self.camera.apply(entity))
             if isinstance(entity, Guard):
                 entity.draw_view_field()  # Teken zichtveld van guards
+
+        for wall in self.walls:
+            self.screen.blit(wall.image, self.camera.apply(wall))
+
+        for exit in self.exits:
+            self.screen.blit(exit.image, self.camera.apply(exit))
+
 
             if isinstance(entity, Exit):
                 entity.draw(self.screen, self.camera)
