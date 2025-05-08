@@ -408,14 +408,8 @@ class Guard(BaseGuard):
         for i in range(self.view_resolution + 1):
             angle = (-self.view_angle + 2 * self.view_angle * (i / self.view_resolution))
             point = center + vec(self.view_dist, 0).rotate(-(self.rot + angle))
-
-            #zie of er geen muren in de weg staan:
-            # muur = self.line_of_sight_clear(center, point)
-            # if muur != True: #volgende code komt vooral uit line_of_sight_clear():
-            #     point = self.get_point_at_wall(center, point, muur, steps)
-                #print(point)
             if ADAPTIVE_CONES:
-                # self.close_walls = []
+                # self.close_walls = [] #idee voor efficientere code
                 # for wall in self.game.walls:
                 #     if (vec(wall.rect.center) - vec(self.rect.center)).magnitude_squared < (VIEW_DIST+2)*TILESIZE:
                 #         self.close_walls.append(wall)
