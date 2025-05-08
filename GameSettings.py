@@ -39,6 +39,8 @@ GUARD_SNELHEID_CHASE = 250  # snelheid tijdens achtervolging (270 origineel, aan
 ALERT_DISTANCE = 200  # afstand waarbinnen guards elkaar waarschuwen (pixels)
 ROTATE_SPEED = 360  # graden per seconde
 
+ADAPTIVE_CONES = False
+
 
 # Zicht instellingen
 TILE_VIEW_DISTANCE = 4  # aantal tegels

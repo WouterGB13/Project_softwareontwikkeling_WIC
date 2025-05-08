@@ -225,8 +225,6 @@ class Guard(BaseGuard):
         self.rotate_speed = ROTATE_SPEED
         self.vel = vec(0, 0)
 
-        self.first_load = True
-
     def reset(self):
         self.state = "patrol"
         self.last_seen_pos = None
@@ -413,12 +411,10 @@ class Guard(BaseGuard):
             # if muur != True: #volgende code komt vooral uit line_of_sight_clear():
             #     point = self.get_point_at_wall(center, point, muur, steps)
                 #print(point)
-            if not self.first_load:
+            if ADAPTIVE_CONES:
                 punt = self.line_of_sight_clear(center, point)
                 if punt != True: #volgende code komt vooral uit line_of_sight_clear():
-                    point = punt
-            else:
-                self.first_load = False                            
+                    point = punt                        
 
             points.append(point)
         kleur = LICHTROOD if self.state == "chase" else ZWART
