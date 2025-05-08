@@ -17,10 +17,10 @@ class Map:
                 self.data.append(clean_line)
 
         if self.data:
-            self.tileBREEDTE: int = len(self.data[0])
-            self.tileHOOGTE: int = len(self.data)
-            self.BREEDTE: int = self.tileBREEDTE * TILESIZE
-            self.HOOGTE: int = self.tileHOOGTE * TILESIZE
+            self.tileBREEDTE = len(self.data[0])
+            self.tileHOOGTE = len(self.data)
+            self.BREEDTE = self.tileBREEDTE * TILESIZE
+            self.HOOGTE = self.tileHOOGTE * TILESIZE
         else:
             self.tileBREEDTE = self.tileHOOGTE = self.BREEDTE = self.HOOGTE = 0
 
@@ -41,8 +41,8 @@ class Camera:
 
     def update(self, target):
         """Camera volgt het opgegeven target (bv. speler)."""
-        x: int = -target.rect.centerx + BREEDTE // 2
-        y: int = -target.rect.centery + HOOGTE // 2
+        x = -target.rect.centerx + BREEDTE // 2
+        y = -target.rect.centery + HOOGTE // 2
 
         # Limiteer camera binnen map-bounds
         x = min(0, x)  # links

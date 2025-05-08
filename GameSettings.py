@@ -4,8 +4,8 @@
 TITEL = "METAL GEAR SOLID V(UB): THE PHANTOM KATER"
 
 # Schermgrootte
-BREEDTE = 1024  # pixels (zorg dat deelbaar is door TILESIZE)
-HOOGTE = 768
+BREEDTE = 1056  # pixels (zorg dat deelbaar is door TILESIZE)
+HOOGTE = 800
 
 # Framerate
 FPS = 60  # frames per seconde
@@ -56,3 +56,5 @@ CHASE_TIME_MS = 0  # niet gebruikt momenteel
 
 #trap
 cooldown_time = 3000  # tijd tussen het activeren van de trap en het kunnen gebruiken van de trap (in milliseconden)
+
+
