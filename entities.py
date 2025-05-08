@@ -520,7 +520,7 @@ class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad IS AF, PROBL
             if current_time - self.search_start_time > self.search_time:
                 self.state = "patrol"
 
-class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET AF
+"""class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET AF
     def __init__(self, game, pos, route):
         super().__init__(game, pos, route)
         self.image.fill(PAARS)
@@ -683,4 +683,4 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
     
     def lengte_squared_vector(self, vector): #puur data verwerking, onderande gebruikt in move_and_dogde_walls
         if type(vector) == pg.math.Vector2:
-            return vector.magnitude_squared()
+            return vector.magnitude_squared()"""
