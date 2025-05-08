@@ -409,9 +409,9 @@ class Guard(BaseGuard):
             point = center + vec(self.view_dist, 0).rotate(-(self.rot + angle))
 
             #zie of er geen muren in de weg staan:
-            muur = self.line_of_sight_clear(center, point)
-            if muur != True: #volgende code komt vooral uit line_of_sight_clear():
-                point = self.get_point_at_wall(center, point, muur, steps)
+            # muur = self.line_of_sight_clear(center, point)
+            # if muur != True: #volgende code komt vooral uit line_of_sight_clear():
+            #     point = self.get_point_at_wall(center, point, muur, steps)
                 #print(point)
                             
 
@@ -555,7 +555,7 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad; NOG NIET A
 
     def update(self):
         current_time = pg.time.get_ticks()
-        print(self.pos)
+        # print(self.pos)
 
         # ALTIJD detectie checken, maakt niet uit in welke state
         if self.detect_player():

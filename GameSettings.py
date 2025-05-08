@@ -46,7 +46,7 @@ TILE_HEAR_DISTANCE = 2 #echte afstand is dit min 1 want hij rekent vanaf de cent
 VIEW_DIST = TILE_VIEW_DISTANCE * TILESIZE  # in pixels
 HEAR_DIST = TILE_HEAR_DISTANCE * TILESIZE
 VISIE_BREEDTE = 50  # halve breedte zichtveld in graden
-RESOLUTIE = 10  # hoeveelheid straal-lijnen in zichtveld (hoger = gedetailleerder)
+RESOLUTIE = 5  # hoeveelheid straal-lijnen in zichtveld (hoger = gedetailleerder)
 
 # Search & Chase timers (in milliseconden)
 SEARCH_TIME_MS = 10000  # zoektijd na speler uit zicht
