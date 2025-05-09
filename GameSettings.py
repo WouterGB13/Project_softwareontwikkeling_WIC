@@ -44,7 +44,7 @@ ADAPTIVE_CONES = False
 
 # Zicht instellingen
 TILE_VIEW_DISTANCE = 4  # aantal tegels
-TILE_HEAR_DISTANCE = 2 #echte afstand is dit min 1 want hij rekent vanaf de centers
+TILE_HEAR_DISTANCE = 15 #echte afstand is dit min 1 want hij rekent vanaf de centers
 VIEW_DIST = TILE_VIEW_DISTANCE * TILESIZE  # in pixels
 HEAR_DIST = TILE_HEAR_DISTANCE * TILESIZE
 VISIE_BREEDTE = 50  # halve breedte zichtveld in graden

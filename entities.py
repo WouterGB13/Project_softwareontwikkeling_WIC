@@ -1,6 +1,7 @@
 import pygame as pg
 import math
 from GameSettings import *
+from pathfinding import *
 
 vec = pg.math.Vector2
 
@@ -142,12 +143,12 @@ class Player(Entity):
                     self.vel.y = 0
                     self.rect.y = self.pos.y
 
-    def detect_guard(self):
-        for entity in self.game.entities:
-            if isinstance(entity, Guard):
-                if entity.detect_player():
-                    entity.state = "chase"
-                    entity.last_seen_pos = vec(self.rect.center) #geef eigen positie door naar alle guards die weten waar player is
+    # def detect_guard(self):
+    #     for entity in self.game.entities:
+    #         if isinstance(entity, Guard):
+    #             if entity.detect_player():
+    #                 entity.state = "chase"
+    #                 entity.last_seen_pos = vec(self.rect.center) #geef eigen positie door naar alle guards die weten waar player is
 
     def update(self):
         self.get_keys()
@@ -169,7 +170,7 @@ class Player(Entity):
         self.rect.y = self.pos.y
         self.collide_with_walls('y')
 
-        self.detect_guard()
+        #self.detect_guard()
 
 class BaseGuard(Entity): #Ik zou kiezen tussen of de historiek laten of met branches werken en alles samen voegen. Deze extra class doet niks
     def __init__(self, game, pos, route):
@@ -319,8 +320,7 @@ class Guard(BaseGuard):
     def detect_player(self):
         player = self.game.player
 
-        distance = (vec(player.rect.center) - vec(self.rect.center)).magnitude_squared()
-        if distance == HEAR_DIST**2 or distance < HEAR_DIST**2:
+        if self.hear_player():
             return True
 
         player_points = [
@@ -348,6 +348,13 @@ class Guard(BaseGuard):
                 return True  # speler gedetecteerd!
 
         return False  # geen enkele hoek voldeed
+    
+    def hear_player(self):
+        distance = (vec(self.game.player.rect.center) - vec(self.rect.center)).magnitude_squared()
+        if distance == HEAR_DIST**2 or distance < HEAR_DIST**2:
+            return True
+        else:
+            return False
 
     def line_of_sight_clear(self, start, end):
         #https://www.pygame.org/docs/ref/rect.html#pygame.Rect.clipline
@@ -520,6 +527,75 @@ class Slimme_Guard(Guard):
         self.image.fill(PAARS)
         self.prev_pos = vec(self.pos)
         self.stuck_timer = 0
+
+    def update(self):
+        current_time = pg.time.get_ticks()
+        
+        # ALTIJD detectie checken, maakt niet uit in welke state
+        if self.detect_player():
+            if self.state != "chase":
+                self.state = "chase"
+                self.last_seen_pos = vec(self.game.player.rect.center)
+                self.last_seen_time = current_time
+                self.alert_nearby_guards()
+
+        # Smooth rotation (blijft gewoon hetzelfde)
+        rot_diff = (self.target_rot - self.rot) % 360
+        if rot_diff > 180:
+            rot_diff -= 360
+        rotation_step = self.rotate_speed * self.game.dt
+        if abs(rot_diff) < rotation_step:
+            self.rot = self.target_rot
+        else:
+            self.rot += rotation_step if rot_diff > 0 else -rotation_step
+        self.rot %= 360
+
+        # Gedrag gebaseerd op state
+        if self.state == "patrol":
+            move_dir = self.navigate(self.pos, self.target)
+            self.view_angle = self.view_angle_default
+            self.view_dist = self.view_dist_default
+            if move_dir.length() > 0:
+                self.target_rot = move_dir.angle_to(vec(1, 0))
+                self.vel = move_dir * self.speed
+                self.move_and_collide()
+
+            if self.at_checkpoint():
+                self.checkpoint = (self.checkpoint + 1) % len(self.route)
+                self.target = vec(self.route[(self.checkpoint + 1) % len(self.route)]) * TILESIZE
+
+        elif self.state == "chase" or self.state == "chase_help":
+            if self.detect_player():
+                self.last_seen_pos = vec(self.game.player.rect.center)
+                self.last_seen_time = current_time
+                self.view_angle = self.view_angle_chase
+                self.view_dist = self.view_dist_chase
+
+            # Synchroniseer live tijdens achtervolging
+            if self.state == "chase":
+                self.alert_nearby_guards()
+            if self.last_seen_pos:
+                pos_on_map = (int(self.rect.x/TILESIZE), int(self.rect.y/TILESIZE))
+                player_pos_on_map = (int(self.game.player.rect.x/TILESIZE), int(self.game.player.rect.y/TILESIZE))
+                a_star_path = simplefy_path(find_path(self.game, pos_on_map, player_pos_on_map))
+                print(a_star_path)
+                to_target = vec(a_star_path[1])*TILESIZE - vec(self.rect.center) +(TILESIZE/2, TILESIZE/2) #laatste term is omdat de map werkt met ander soort coordinaten
+                if to_target.length() > 0:
+                    move_dir = to_target.normalize()
+                    self.vel = move_dir * GUARD_SNELHEID_CHASE
+                    self.target_rot = move_dir.angle_to(vec(1, 0))
+                    self.move_and_collide()
+                    
+
+                if to_target.length() < 4:
+                    self.state = "search"
+                    self.search_start_time = current_time
+
+        elif self.state == "search":
+            self.vel = vec(0, 0)
+            self.target_rot += 60 * self.game.dt  # rustig rondkijken
+            if current_time - self.search_start_time > self.search_time:
+                self.state = "patrol"
         
     def DEZE_SHIT_WERKT_NIET_STOP_MET_HET_TE_PROBEREN_FIXEN(self): #jawel laat het staan want ik heb de code nog nodig, doe gwn deze def toe
     # def update(self):

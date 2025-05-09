@@ -8,7 +8,7 @@ from GameSettings import *  # scherminstellingen, TILESIZE, kleuren etc.
 class Map:
     """Laadt een tile-based map vanaf tekstbestand."""
     def __init__(self, filename: str):
-        self.data: list[str] = []
+        self.data = []
         self.guard_waypoints_map: dict[str, list[tuple[int, int]]] = {}
 
         with open(filename, 'r') as map_file:
@@ -16,20 +16,17 @@ class Map:
                 clean_line = line.strip()
                 self.data.append(clean_line)
 
-        if self.data:
-            self.tileBREEDTE = len(self.data[0])
-            self.tileHOOGTE = len(self.data)
-            self.BREEDTE = self.tileBREEDTE * TILESIZE
-            self.HOOGTE = self.tileHOOGTE * TILESIZE
-        else:
-            self.tileBREEDTE = self.tileHOOGTE = self.BREEDTE = self.HOOGTE = 0
+        self.tileBREEDTE = len(self.data[0])
+        self.tileHOOGTE = len(self.data)
+        self.BREEDTE = self.tileBREEDTE * TILESIZE
+        self.HOOGTE = self.tileHOOGTE * TILESIZE
 
 class Camera:
     """Beheert zichtbare viewport die over de map beweegt."""
     def __init__(self, width: int, height: int):
-        self.camera: pg.Rect = pg.Rect(0, 0, width, height)
-        self.width: int = width
-        self.height: int = height
+        self.camera = pg.Rect(0, 0, width, height)
+        self.width = width
+        self.height = height
 
     def apply(self, entity) -> pg.Rect:
         """Verschuift entity-positie relatief aan camera."""

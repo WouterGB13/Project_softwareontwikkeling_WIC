@@ -1,81 +1,108 @@
-import heapq
-import pygame as pg
-from GameSettings import BREEDTE, HOOGTE, TILESIZE
+from GameSettings import *
 
-vec = pg.math.Vector2
+def adding_tuples(t1, t2):
+    return (t1[0] + t2[0], t1[1] + t2[1])
 
-#dubbele file?
-
-def heuristic(a, b):
-    """Eenvoudige manhattan afstand voor grids."""
-    return abs(a[0] - b[0]) + abs(a[1] - b[1])
-
-
-def astar(start, goal, grid):
-    """
-    A* pathfinding algoritme.
-    start en goal zijn Vector2s of tuples.
-    grid is een 2D lijst waar 1 = muur, 0 = vrije ruimte.
-    Geeft een lijst van Vector2 tiles als pad terug.
-    """
-    # Zorg ervoor dat start en goal tuples zijn
-    start = (int(start.x), int(start.y)) if isinstance(start, vec) else start
-    goal = (int(goal.x), int(goal.y)) if isinstance(goal, vec) else goal
-
-    open_set = []
-    heapq.heappush(open_set, (0, start))
-    came_from = {}
-    g_score = {start: 0}
-    f_score = {start: heuristic(start, goal)}
-
-    directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]  # 4 richtingen
-
-    while open_set:
-        current = heapq.heappop(open_set)[1]
-
-        if current == goal:
-            # reconstruct path
-            path = []
-            while current in came_from:
-                path.append(vec(current))  # Maak er Vector2 van
-                current = came_from[current]
-            path.reverse()
-            return path
-
-        for direction in directions:
-            neighbor = (current[0] + direction[0], current[1] + direction[1])
-
-            # Buiten de map?
-            if not (0 <= neighbor[0] < len(grid[0]) and 0 <= neighbor[1] < len(grid)):
+def find_path(game, start_loc_map, end_loc_map): #de locaties zijn tuples (bv: (2,3))
+    map = game.kaart.data
+    snelste_weg = [start_loc_map]
+    opties = []
+    optie_kosten = []
+    vast_komen_te_zitter = [None]
+    aantal_keren_langs_pos = {}
+    beweegopties = [(1, 0), (0, 1), (-1, 0), (0, -1)]
+    
+    positie = start_loc_map
+    vorige_posities = [None]
+    
+    timer = 0
+    
+    while positie != end_loc_map and timer < 1000:
+        timer += 1
+        opties.clear()
+        optie_kosten.clear()
+        
+        for pos in aantal_keren_langs_pos:
+            if aantal_keren_langs_pos[pos] == 3 and not pos in vast_komen_te_zitter:
+                vast_komen_te_zitter.append(pos)
+                
+        for optie in beweegopties:
+            som = adding_tuples(positie, optie)
+            if map[som[1]][som[0]] != '1':
+                opties.append(som)
+                optie_kosten.append((som[0] - end_loc_map[0])**2 + (som[1] - end_loc_map[1])**2)
+        
+        if len(opties) > 1:
+            for pos in vast_komen_te_zitter:
+                for index in range(len(opties)):
+                    if opties[index] == pos:
+                        opties.pop(index)
+                        optie_kosten.pop(index)
+                        break
+            for vorige_pos in vorige_posities:
+                for index in range(len(opties)):
+                    if opties[index] == vorige_pos:
+                        opties.pop(index)
+                        optie_kosten.pop(index)
+                        break       
+            if len(opties) == 0:
+                vorige_posities = [None]
                 continue
+                    
+            laagste_kost_index = 0
+            for index in range(1, len(optie_kosten)):
+                if optie_kosten[index] < optie_kosten[laagste_kost_index]:
+                    laagste_kost_index = index
+            vorige_posities.append(positie)
+            positie = opties[laagste_kost_index]
+        elif len(opties) == 1:
+            vorige_posities = [None]
+            vorige_posities.append(positie)
+            positie = opties[0]
+        else:
+            snelste_weg.append(False)
+            break
+            
+        snelste_weg.append(positie)
+        if positie in aantal_keren_langs_pos:
+            aantal_keren_langs_pos[positie] += 1
+        else:
+            aantal_keren_langs_pos[positie] = 1
+            
+        if timer == 1000:
+            print("time's up")
+            snelste_weg.append(False)
+            
+    snelste_weg.append(True)
+    snelste_weg.pop(-1)
+    return snelste_weg
 
-            # Muur?
-            if grid[neighbor[1]][neighbor[0]] == 1:
-                continue
 
-            tentative_g_score = g_score[current] + 1
-
-            if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
-                came_from[neighbor] = current
-                g_score[neighbor] = tentative_g_score
-                f_score[neighbor] = tentative_g_score + heuristic(neighbor, goal)
-                heapq.heappush(open_set, (f_score[neighbor], neighbor))
-
-    return []  # Geen pad gevonden
-
-
-def load_map(game):
-    """
-    Converteer walls in game.entities naar een 2D grid.
-    1 = muur, 0 = vrije ruimte.
-    """
-
-    grid = [[0 for _ in range(BREEDTE)] for _ in range(HOOGTE)]
-
-    for entity in game.entities:
-        if entity.__class__.__name__ == "Wall":
-            tile_x = int(entity.pos.x // TILESIZE)
-            tile_y = int(entity.pos.y // TILESIZE)
-            grid[tile_y][tile_x] = 1
-
-    return grid
+def simplefy_path(path):
+    geskipped1 = False
+    geskipped2 = False
+    for a in range(len(path)*2):
+        for x in range(len(path)):
+            geskipped1 = False
+            for y in range(len(path)):
+                if path[x] == path[y] and x != y:
+                    for z in range(x, y, int(y-x/abs(y-x))):
+                            path.pop(x+1)
+                    geskipped1 = True
+                    break
+            if geskipped1: break
+            
+    for a in range(10):
+        for x in range(len(path)):
+            geskipped2 = False
+            for y in range(x, len(path)):
+                geskipped2 = False
+                for b in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
+                    if adding_tuples(path[x], b) == path[y] and abs(x-y) != 1: #er zijn overbodige stappen gedaan want uiteindelijk kunnen we dus alle tussenstappen tussen x en y in slechts 1 stap doen:
+                        for z in range(x, y, int(y-x/abs(y-x))):
+                            path.pop(x+1)
+                        geskipped2 = True
+                        break
+                if geskipped2: break
+            if geskipped2: break
+    return path
