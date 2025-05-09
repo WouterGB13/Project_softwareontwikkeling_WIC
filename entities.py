@@ -82,6 +82,11 @@ class Trap(Entity):
         if self.activated and pg.time.get_ticks() - self.last_triggered >= self.cooldown_time:
             self.activated = False
 
+class Score(Entity):
+    def __init__(self, game, pos):
+        super().__init__(game, pos, color=BLAUW)
+        
+
 class Energie(Entity):
     pass
 

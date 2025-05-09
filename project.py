@@ -11,6 +11,8 @@ import pygame as pg
 from GameSettings import *  # Instellingen zoals breedte, hoogte, FPS, kleuren
 from entities import *      # Klassen zoals Wall, Player, Guard
 from map_en_camera import * # Map (levelstructuur) en Camera functionaliteit
+import random
+
 
 class Game:
     """De hoofdklasse die alles beheert: speler, guards, levels en events."""
@@ -52,6 +54,7 @@ class Game:
         """Start een nieuw spel: reset entiteiten en laad alles."""
         self.entities.clear()
         self.walls = []
+        self.possible_score_pos = []
         self.load_data()
         self.exits = []  # Voeg toe in __init__ of new()
 
@@ -69,6 +72,8 @@ class Game:
                 elif tile == "E":
                     exit_tile = Exit(self, (col_idx, row_idx))
                     self.exits.append(exit_tile)
+                elif tile == "S":
+                    self.possible_score_pos.append((col_idx,row_idx))
 
         # Plaats guards met hun patrouille-routes
         for route in self.dumb_guard_routes:
@@ -78,6 +83,13 @@ class Game:
         for route in self.smart_guard_routes:
             guard = Slimme_Guard(self, (route[0][0], route[0][1]), route)
             self.entities.append(guard)
+
+        for i in range(AANTAL_PUNTEN):
+            pos = random.choice(self.possible_score_pos)
+            punt = Score(self,pos)
+            self.possible_score_pos.remove(pos)
+            self.entities.append(punt)
+            
 
         # Installeer de camera om mee te bewegen met de speler
         self.camera = Camera(self.kaart.BREEDTE, self.kaart.HOOGTE)
