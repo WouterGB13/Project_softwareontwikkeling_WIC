@@ -469,7 +469,7 @@ class Guard(BaseGuard):
         #     pg.draw.circle(self.game.screen, ROOD, point, 4)
         pg.draw.polygon(self.game.screen, kleur, points, 2)
 
-class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad IS AF, PROBLEEM MET RESUME ROUTE WORDT VEROORZAAKT DOOR ALGEMENE NAVIGATIECODE
+class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad
     #DO NOT TOUCH ZONDER OVERLEGGEN
 
     def __init__(self, game, pos, route):
@@ -563,12 +563,19 @@ class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad IS AF, PROBL
             if current_time - self.search_start_time > self.search_time:
                 self.state = "patrol"
 
-class Slimme_Guard(Guard):
+class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad
     def __init__(self, game, pos, route):
         super().__init__(game, pos, route)
         self.image.fill(PAARS)
         self.prev_pos = vec(self.pos)
         self.stuck_timer = 0
+        self.retreat_path = []
+        self.chase_start_pos = None
+
+    def checkretreat(self):
+        if len(self.retreat_path) != 0:
+            return True
+        return False
 
     def update(self):
         current_time = pg.time.get_ticks()
@@ -577,6 +584,8 @@ class Slimme_Guard(Guard):
         if self.detect_player():
             if self.state != "chase":
                 self.state = "chase"
+                if self.chase_start_pos == None:
+                    self.chase_start_pos = (int(self.pos.x/TILESIZE), int(self.pos.y/TILESIZE))
                 self.last_seen_pos = vec(self.game.player.rect.center)
                 self.last_seen_time = current_time
                 self.alert_nearby_guards()
@@ -594,6 +603,12 @@ class Slimme_Guard(Guard):
 
         # Gedrag gebaseerd op state
         if self.state == "patrol":
+            #print(self.target)
+            if self.checkretreat() == True:
+                self.next_target = self.target
+                self.current_checkpoint = (self.checkpoint)
+                self.target = self.retreat_path[-1][0]*TILESIZE,self.retreat_path[-1][1]*TILESIZE
+                print(self.target)
             move_dir = self.navigate(self.pos, self.target)
             self.view_angle = self.view_angle_default
             self.view_dist = self.view_dist_default
@@ -603,8 +618,16 @@ class Slimme_Guard(Guard):
                 self.move_and_collide()
 
             if self.at_checkpoint():
-                self.checkpoint = (self.checkpoint + 1) % len(self.route)
-                self.target = vec(self.route[(self.checkpoint + 1) % len(self.route)]) * TILESIZE
+                if len(self.retreat_path) != 0:
+                    self.retreat_path.pop(-1)
+                    if len(self.retreat_path) >= 1: #anders een error "list index out of range"
+                        self.target = self.retreat_path[-1]
+                    else: 
+                        self.target = self.next_target #resume origineel pad
+                        self.checkpoint = self.current_checkpoint - 1 # -1 want anders wordt checkpoint overgeslaan
+                else:        
+                    self.checkpoint = (self.checkpoint + 1) % len(self.route)
+                    self.target = vec(self.route[(self.checkpoint + 1) % len(self.route)]) * TILESIZE
 
         elif self.state == "chase" or self.state == "chase_help":
             if self.detect_player():
@@ -620,18 +643,25 @@ class Slimme_Guard(Guard):
                 pos_on_map = (int(self.rect.x/TILESIZE), int(self.rect.y/TILESIZE))
                 player_pos_on_map = (int(self.game.player.rect.x/TILESIZE), int(self.game.player.rect.y/TILESIZE))
                 a_star_path = simplefy_path(find_path(self.game, pos_on_map, player_pos_on_map))
-                print(a_star_path)
-                to_target = vec(a_star_path[1])*TILESIZE - vec(self.rect.center) +(TILESIZE/2, TILESIZE/2) #laatste term is omdat de map werkt met ander soort coordinaten
-                if to_target.length() > 0:
-                    move_dir = to_target.normalize()
-                    self.vel = move_dir * GUARD_SNELHEID_CHASE
-                    self.target_rot = move_dir.angle_to(vec(1, 0))
-                    self.move_and_collide()
-                    
+                #print(a_star_path)
+                try: 
+                    to_target = vec(a_star_path[1])*TILESIZE - vec(self.rect.center) +(TILESIZE/2, TILESIZE/2) #laatste term is omdat de map werkt met ander soort coordinaten
+                
+                    if to_target.length() > 0:
+                        move_dir = to_target.normalize()
+                        self.vel = move_dir * GUARD_SNELHEID_CHASE
+                        self.target_rot = move_dir.angle_to(vec(1, 0))
+                        self.move_and_collide()
+                except: pass #game crashte soms zonder deze try-except, is sinds aanpassing niet meer gebeurd, trad op als a_star_path 1 element had    
 
                 if to_target.length() < 4:
                     self.state = "search"
+                    pos_on_map = (int(self.rect.x/TILESIZE), int(self.rect.y/TILESIZE))
+                    self.retreat_path = simplefy_path(find_path(self.game,pos_on_map,self.chase_start_pos))
+                    self.retreat_path.reverse()
+                    print(self.retreat_path)
                     self.search_start_time = current_time
+                    self.chase_start_pos == None
 
         elif self.state == "search":
             self.vel = vec(0, 0)
