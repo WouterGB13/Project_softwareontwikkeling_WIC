@@ -299,7 +299,7 @@ class Game:
 
         font_teller = pg.font.SysFont(None, 45)
         teller_text = font_teller.render(f"Aantal pogingen: {self.teller}", True, WIT)
-        score_text = font_teller.render(f"Score: {self.score}",True,WIT)
+        score_text = font_teller.render(f"Score: s{self.score}",True,WIT)
         teller_rect = teller_text.get_rect(center=(BREEDTE // 2, HOOGTE // 2 + 100))
         score_rect = score_text.get_rect(center = (BREEDTE // 2, HOOGTE // 2 + 145))
         self.screen.blit(teller_text, teller_rect)

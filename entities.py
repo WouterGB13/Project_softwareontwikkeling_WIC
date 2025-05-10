@@ -99,9 +99,7 @@ class Score(Entity):
             self.game.entities.append(punt)
             #verwijder oud punt
             self.game.possible_score_pos.append(tuple(self.pos//32))
-            self.game.entities.remove(self)
-                  
-        
+            self.game.entities.remove(self)       
 
 class Energie(Entity):
     pass
@@ -137,8 +135,6 @@ class Bag(Entity):
                     self.content = 0
                     self.cooldown = 20
         return
-
-
 
 class Item(Entity):
     pass
@@ -541,6 +537,9 @@ class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad IS AF, PROBL
                 self.view_dist = self.view_dist_chase
 
             self.retreat_path.append(self.pos.copy())
+            if current_time-self.last_seen_time > STUCK_TIME_LIMIT:
+                self.state = "search"
+                self.search_start_time = current_time
 
             # Synchroniseer live tijdens achtervolging
             if self.state == "chase":

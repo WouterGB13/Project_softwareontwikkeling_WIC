@@ -31,7 +31,7 @@ GRIDBREEDTE = BREEDTE // TILESIZE  # aantal tegels horizontaal
 GRIDHOOGTE = HOOGTE // TILESIZE    # aantal tegels verticaal
 
 # Speler instellingen
-SPELER_SNELHEID = 600  # pixels per seconde (300)
+SPELER_SNELHEID = 300  # pixels per seconde (300)
 MAX_LIVES = 6
 
 # Guard instellingen
