@@ -10,6 +10,7 @@ class Entity:
         self.game = game
         self.pos = vec(pos) * TILESIZE
         self.image = pg.Surface((TILESIZE, TILESIZE))
+        self.color = color
         if image_path: #image file
             self.image = pg.image.load(image_path).convert_alpha()
             self.image = pg.transform.scale(self.image, (TILESIZE, TILESIZE))
@@ -85,6 +86,12 @@ class Trap(Entity):
 class Score(Entity):
     def __init__(self, game, pos):
         super().__init__(game, pos, color=BLAUW)
+        #self.active = True #als dit false wordt, verwijder uit entitylist
+
+    def update(self):
+        if self.rect.colliderect(self.game.player):
+            self.game.score +=1
+            self.game.entities.remove(self)      
         
 
 class Energie(Entity):
@@ -97,10 +104,32 @@ class Caught(Entity):
     pass
 
 class Bag(Entity):
-    pass
+    def __init__(self, game, pos):
+        super().__init__(game, pos, color=BRUIN)
+        self.content = 1
+        self.cooldown = 0
+        
+    def update(self):
+        if self.rect.colliderect(self.game.player):
+            Score_text = pg.font.SysFont(None, 48).render("Press P to use", True, WIT)
+            Score_rect = Score_text.get_rect(center=(BREEDTE // 2, HOOGTE // 2 - 80))
+            self.game.screen.blit(Score_text,Score_rect)
+            pg.display.flip()
+            keys = pg.key.get_pressed()
+            if self.cooldown != 0:
+                self.cooldown -=1
+            if keys[pg.K_p]:
+                if self.content == 0 and self.cooldown == 0:
+                    self.content = self.game.score
+                    self.game.score = 0
+                    self.cooldown = 20
+                elif self.cooldown == 0:
+                    self.game.score += self.content
+                    self.content = 0
+                    self.cooldown = 20
+        return
 
-class Backpack(Entity):
-    pass
+
 
 class Item(Entity):
     pass
@@ -318,7 +347,7 @@ class Guard(BaseGuard):
 
         elif self.state == "search":
             self.vel = vec(0, 0)
-            self.target_rot += 60 * self.game.dt  # rustig rondkijken
+            self.target_rot += 20 * self.game.dt  # rustig rondkijken
             if current_time - self.search_start_time > self.search_time:
                 self.state = "patrol"
 
@@ -522,7 +551,7 @@ class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad IS AF, PROBL
 
         elif self.state == "search":
             self.vel = vec(0, 0)
-            self.target_rot += 60 * self.game.dt  # rustig rondkijken
+            self.target_rot += 20 * self.game.dt  # rustig rondkijken
             if current_time - self.search_start_time > self.search_time:
                 self.state = "patrol"
 
@@ -598,7 +627,7 @@ class Slimme_Guard(Guard):
 
         elif self.state == "search":
             self.vel = vec(0, 0)
-            self.target_rot += 60 * self.game.dt  # rustig rondkijken
+            self.target_rot += 20 * self.game.dt  # rustig rondkijken
             if current_time - self.search_start_time > self.search_time:
                 self.state = "patrol"
         
@@ -674,7 +703,7 @@ class Slimme_Guard(Guard):
 
     #     elif self.state == "search":
     #         self.vel = vec(0, 0)
-    #         self.target_rot += 60 * self.game.dt
+    #         self.target_rot += 20 * self.game.dt
     #         if current_time - self.search_start_time > self.search_time:
     #             self.state = "patrol"
 

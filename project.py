@@ -26,6 +26,7 @@ class Game:
         self.gameover = False
         self.entities = []      # Alle objecten (walls, player, guards)
         self.teller = 0          # Aantal keren dat speler game over ging
+        self.score = 0              #aantal punten momenteel in bezit van speler
         self.button_rect = None  # Voor resetknop na game over
         self.gameover_screen_drawn = False
         self.exit_screen = False  # Voeg een flag toe om te controleren wanneer het exit-scherm zichtbaar is
@@ -55,6 +56,7 @@ class Game:
         self.entities.clear()
         self.walls = []
         self.possible_score_pos = []
+        self.score = 0
         self.load_data()
         self.exits = []  # Voeg toe in __init__ of new()
 
@@ -66,6 +68,7 @@ class Game:
                     self.walls.append(wall)
                 elif tile == 'P':
                     self.player = Player(self, (col_idx, row_idx), GEEL)
+                    self.startpos = vec(col_idx*TILESIZE, row_idx*TILESIZE)
                     self.entities.append(self.player)
                 elif tile == "C":
                     print(f"kolom {col_idx}, rij {row_idx}")
@@ -74,6 +77,9 @@ class Game:
                     self.exits.append(exit_tile)
                 elif tile == "S":
                     self.possible_score_pos.append((col_idx,row_idx))
+                elif tile == "B":
+                    self.bag = Bag(self,(col_idx,row_idx))
+                    self.entities.append(self.bag)
 
         # Plaats guards met hun patrouille-routes
         for route in self.dumb_guard_routes:
@@ -154,7 +160,8 @@ class Game:
             entity.update()
             if isinstance(entity, Guard):
                 if self.player.rect.colliderect(entity.rect):
-                    self.player.pos = vec(32*16,32*25)
+                    self.player.pos = self.startpos
+                    self.score = 0
                     for entity in self.entities:
                         if isinstance(entity, Guard):
                             entity.reset()
@@ -173,6 +180,12 @@ class Game:
 
         # Update camera positie gebaseerd op speler
         self.camera.update(self.player)
+
+    def draw_score(self):
+        scorefont = pg.font.SysFont(None,32)
+        score_display = scorefont.render(f"{self.score}",True,WIT)
+        score_rect = score_display.get_rect(center=(BREEDTE - 16, 16))
+        self.screen.blit(score_display, score_rect)
 
     def draw(self):
         """Teken alle game-elementen op het scherm."""
@@ -194,6 +207,7 @@ class Game:
             if isinstance(entity, Exit):
                 entity.draw(self.screen, self.camera)
         self.draw_lives()
+        self.draw_score()
         pg.display.flip()
 
     def teken_grid(self):
