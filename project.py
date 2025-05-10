@@ -30,6 +30,7 @@ class Game:
         self.button_rect = None  # Voor resetknop na game over
         self.gameover_screen_drawn = False
         self.exit_screen = False  # Voeg een flag toe om te controleren wanneer het exit-scherm zichtbaar is
+        self.active_points = 0
 
     def create_clock(self):
         """Maakt de klok aan voor FPS control."""
@@ -156,6 +157,7 @@ class Game:
 
     def update(self):
         """Update alle objecten en check botsingen."""
+        print(self.possible_score_pos)
         for entity in self.entities:
             entity.update()
             if isinstance(entity, Guard):

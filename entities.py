@@ -2,6 +2,7 @@ import pygame as pg
 import math
 from GameSettings import *
 from pathfinding import *
+import random
 
 vec = pg.math.Vector2
 
@@ -88,10 +89,18 @@ class Score(Entity):
         super().__init__(game, pos, color=BLAUW)
         #self.active = True #als dit false wordt, verwijder uit entitylist
 
-    def update(self):
+    def update(self):    
         if self.rect.colliderect(self.game.player):
             self.game.score +=1
-            self.game.entities.remove(self)      
+            #maak nieuw punt
+            pos = random.choice(self.game.possible_score_pos)
+            punt = Score(self.game,pos)
+            self.game.possible_score_pos.remove(pos)
+            self.game.entities.append(punt)
+            #verwijder oud punt
+            self.game.possible_score_pos.append(tuple(self.pos//32))
+            self.game.entities.remove(self)
+                  
         
 
 class Energie(Entity):
