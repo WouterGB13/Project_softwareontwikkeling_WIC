@@ -157,7 +157,6 @@ class Game:
 
     def update(self):
         """Update alle objecten en check botsingen."""
-        print(self.possible_score_pos)
         for entity in self.entities:
             entity.update()
             if isinstance(entity, Guard):
@@ -294,14 +293,17 @@ class Game:
         self.screen.fill(GROEN)
 
         font_large = pg.font.SysFont(None, 72)
-        text_surface = font_large.render("EXIT BEHAALD!", True, WIT)
+        text_surface = font_large.render("EXIT BEHAALD! ", True, WIT)
         text_rect = text_surface.get_rect(center=(BREEDTE // 2, HOOGTE // 2 - 100))
         self.screen.blit(text_surface, text_rect)
 
         font_teller = pg.font.SysFont(None, 45)
         teller_text = font_teller.render(f"Aantal pogingen: {self.teller}", True, WIT)
+        score_text = font_teller.render(f"Score: {self.score}",True,WIT)
         teller_rect = teller_text.get_rect(center=(BREEDTE // 2, HOOGTE // 2 + 100))
+        score_rect = score_text.get_rect(center = (BREEDTE // 2, HOOGTE // 2 + 145))
         self.screen.blit(teller_text, teller_rect)
+        self.screen.blit(score_text,score_rect)
 
         font_button = pg.font.SysFont(None, 48)
         button_text = font_button.render("Klik om terug te keren naar het startscherm", True, WIT)
