@@ -267,7 +267,6 @@ class Game:
                         wachten = False
                         self.reset_game()
 
-
     def draw_game_over_screen(self):
         self.screen.fill(ZWART)
 
