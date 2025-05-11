@@ -35,7 +35,7 @@ SPELER_SNELHEID = 300  # pixels per seconde (300)
 MAX_LIVES = 6
 
 # Guard instellingen
-GUARD_SNELHEID = 50  # patrol snelheid
+GUARD_SNELHEID = 50   # patrol snelheid
 GUARD_SNELHEID_CHASE = 250  # snelheid tijdens achtervolging (270 origineel, aangepast voor testing purposes)
 ALERT_DISTANCE = 200  # afstand waarbinnen guards elkaar waarschuwen (pixels)
 ROTATE_SPEED = 360  # graden per seconde
@@ -44,11 +44,11 @@ ADAPTIVE_CONES = False
 
 
 # Zicht instellingen
-TILE_VIEW_DISTANCE = 4  # aantal tegels
+TILE_VIEW_DISTANCE = 10  # aantal tegels
 TILE_HEAR_DISTANCE = 1.99 #echte afstand is dit min 1 want hij rekent vanaf de centers
 VIEW_DIST = TILE_VIEW_DISTANCE * TILESIZE  # in pixels
-HEAR_DIST = TILE_HEAR_DISTANCE * TILESIZE #HEEFT OOK INVLOED OP HOEVEEL DE SPELER MAG BEWEGEN VOOR DE SLIMME GUARD EEN NIEUW A_STAR PAD AANMAAKT
-VISIE_BREEDTE = 50  # halve breedte zichtveld in graden
+HEAR_DIST = TILE_HEAR_DISTANCE * TILESIZE
+VISIE_BREEDTE = 37.5  # halve breedte zichtveld in graden
 RESOLUTIE = 10  # hoeveelheid straal-lijnen in zichtveld (hoger = gedetailleerder)
 
 # Search & Chase timers (in milliseconden)

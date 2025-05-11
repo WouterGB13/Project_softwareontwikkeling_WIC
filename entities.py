@@ -542,7 +542,9 @@ class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad
                         self.checkpoint = self.current_checkpoint - 1 # -1 want anders wordt checkpoint overgeslaan
                 else:        
                     self.checkpoint = (self.checkpoint + 1) % len(self.route)
+                    #print(self.checkpoint) #voor debugging
                     self.target = vec(self.route[(self.checkpoint + 1) % len(self.route)]) * TILESIZE
+                    #print(self.target.x/TILESIZE,self.target.y/TILESIZE)
 
         elif self.state == "chase" or self.state == "chase_help":
             if self.detect_player():
