@@ -155,5 +155,4 @@ def reverse_cut_path(guard, path, vision_range):
             for z in range(1, len(path) - stap - 1):  #DEZE OOK
                 path.pop(-2)
             break
-    print(path)
     return path

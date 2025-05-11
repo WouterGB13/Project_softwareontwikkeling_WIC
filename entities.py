@@ -149,6 +149,7 @@ class Player(Entity):
         self.stun_duration = 0
         self.lives = MAX_LIVES
         self.last_wall_pos = self.pos.copy()
+        self.smart_walls = []
 
     def get_keys(self):
         self.vel = vec(0, 0)
