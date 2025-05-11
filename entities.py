@@ -149,6 +149,7 @@ class Player(Entity):
         self.stun_duration = 0
         self.lives = MAX_LIVES
         self.last_wall_pos = self.pos.copy()
+        self.smart_walls = []
 
     def get_keys(self):
         self.vel = vec(0, 0)
@@ -167,11 +168,11 @@ class Player(Entity):
 
     def load_close_walls(self):
         self.last_wall_pos = self.pos.copy()
-        load_distance = max(BREEDTE, HOOGTE)
         self.smart_walls = []
         for wall in self.game.walls:
-            if (wall.pos - self.last_wall_pos).magnitude_squared() < load_distance**2:
+            if (wall.pos - self.last_wall_pos).magnitude_squared() < MAX_WALL_DIST**2:
                 self.smart_walls.append(wall)
+        #print(f"{len(self.smart_walls)} muren ingeladen") #voor demonstratie doeleinden er in gelaten: print wanneer er hoeveel muren worden ingeladen
 
     def collide_with_walls(self, direction):
         for wall in self.smart_walls:
@@ -208,7 +209,7 @@ class Player(Entity):
             else:
                 self.stunned = False
 
-        if (self.pos - self.last_wall_pos).magnitude_squared() > BREEDTE**2 - TILESIZE:
+        if (self.pos - self.last_wall_pos).magnitude_squared() > (MAX_PLAYER_MOVE/2)**2:
             self.load_close_walls()
 
         # Eerst X-beweging
@@ -264,6 +265,8 @@ class Guard(BaseGuard):
         self.last_seen_time = 0
         
         # Vision instellingen vanuit GameSettings
+        self.player_in_sight = False
+        self.can_hear_player = False
         self.view_angle_default = VISIE_BREEDTE
         self.view_dist_default = VIEW_DIST
         self.view_resolution = RESOLUTIE
@@ -280,9 +283,6 @@ class Guard(BaseGuard):
         self.rot = 0
         self.rotate_speed = ROTATE_SPEED
         self.vel = vec(0, 0)
-
-        self.last_wall_pos = self.pos.copy()
-        self.load_close_walls()
 
     def reset(self):
         self.state = "patrol"
@@ -371,10 +371,10 @@ class Guard(BaseGuard):
                 self.state = "patrol"
 
     def detect_player(self):
+        return self.see_player() or self.hear_player()
+        
+    def see_player(self):
         player = self.game.player
-
-        if self.hear_player():
-            return True
 
         player_points = [
             vec(player.rect.topleft),
@@ -397,16 +397,19 @@ class Guard(BaseGuard):
             if abs(angle) > self.view_angle:
                 continue  # buiten zichtveld
 
-            if self.line_of_sight_clear(vec(self.rect.center), point, self.smart_walls) == True:
+            if self.line_of_sight_clear(vec(self.rect.center), point, self.game.player.smart_walls) == True:
+                self.player_in_sight = True
                 return True  # speler gedetecteerd!
-
+        self.player_in_sight = False
         return False  # geen enkele hoek voldeed
     
     def hear_player(self):
         distance = (vec(self.game.player.rect.center) - vec(self.rect.center)).magnitude_squared()
         if distance == HEAR_DIST**2 or distance < HEAR_DIST**2:
+            self.can_hear_player = True
             return True
         else:
+            self.can_hear_player = False
             return False
 
     def line_of_sight_clear(self, start, end, walls):
@@ -417,14 +420,6 @@ class Guard(BaseGuard):
             if wall.rect.clipline(start, end):
                 return wall  # geef het Wall object terug
         return True  # vrije zichtlijn
-    
-    def load_close_walls(self):
-        self.last_wall_pos = self.pos.copy()
-        load_distance = max(BREEDTE, HOOGTE)
-        self.smart_walls = []
-        for wall in self.game.walls:
-            if (wall.pos - self.last_wall_pos).magnitude_squared() < load_distance**2:
-                self.smart_walls.append(wall)
 
     def alert_nearby_guards(self):
         for entity in self.game.entities:
@@ -452,7 +447,7 @@ class Guard(BaseGuard):
         self.collide_with_walls('y')
 
     def collide_with_walls(self, direction):
-        for wall in self.game.walls:
+        for wall in self.game.player.smart_walls:
             if self.rect.colliderect(wall.rect):
                 if direction == 'x':
                     if self.vel.x > 0:
@@ -480,7 +475,7 @@ class Guard(BaseGuard):
                 # for wall in self.game.walls:
                 #     if (vec(wall.rect.center) - vec(self.rect.center)).magnitude_squared < (VIEW_DIST+2)*TILESIZE:
                 #         self.close_walls.append(wall)
-                punt = self.line_of_sight_clear(center, point, self.smart_walls)
+                punt = self.line_of_sight_clear(center, point, self.game.player.smart_walls)
                 if punt != True: #volgende code komt vooral uit line_of_sight_clear():
                     point = punt                        
 
@@ -582,7 +577,7 @@ class Domme_Guard(Guard): #gegenereerd door een '0' vooraan het pad
 
         elif self.state == "search":
             self.vel = vec(0, 0)
-            self.target_rot += 20 * self.game.dt  # rustig rondkijken
+            self.target_rot += ROTATE_SPEED/5 * self.game.dt  # rustig rondkijken
             if current_time - self.search_start_time > self.search_time:
                 self.state = "patrol"
 
@@ -592,8 +587,10 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad
         self.image.fill(PAARS)
         self.prev_pos = vec(self.pos)
         self.stuck_timer = 0
+        self.chase_path = []
         self.retreat_path = []
         self.chase_start_pos = None
+        self.last_pos_for_smart_path = vec(0,0)
 
     def checkretreat(self):
         if len(self.retreat_path) != 0:
@@ -626,12 +623,10 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad
 
         # Gedrag gebaseerd op state
         if self.state == "patrol":
-            #print(self.target)
             if self.checkretreat() == True:
                 self.next_target = self.target
                 self.current_checkpoint = (self.checkpoint)
                 self.target = self.retreat_path[-1][0]*TILESIZE,self.retreat_path[-1][1]*TILESIZE
-                #print(self.target)
             move_dir = self.navigate(self.pos, self.target)
             self.view_angle = self.view_angle_default
             self.view_dist = self.view_dist_default
@@ -643,7 +638,9 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad
             if self.at_checkpoint():
                 if len(self.retreat_path) != 0:
                     self.retreat_path.pop(-1)
+                    #self.retreat_path.pop(-1)
                     if len(self.retreat_path) >= 1: #anders een error "list index out of range"
+                        self.retreat_path = reverse_cut_path(self, self.retreat_path, self.view_dist//TILESIZE*4)
                         self.target = self.retreat_path[-1]
                     else: 
                         self.target = self.next_target #resume origineel pad
@@ -662,146 +659,66 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad
             # Synchroniseer live tijdens achtervolging
             if self.state == "chase":
                 self.alert_nearby_guards()
-            if self.last_seen_pos:
-                pos_on_map = (int(self.rect.x/TILESIZE), int(self.rect.y/TILESIZE))
-                player_pos_on_map = (int(self.game.player.rect.x/TILESIZE), int(self.game.player.rect.y/TILESIZE))
-                a_star_path = cut_path(self, simplefy_path(find_path(self.game, pos_on_map, player_pos_on_map)), self.view_dist)
-                #a_star_path = simplefy_path(find_path(self.game, pos_on_map, player_pos_on_map))
+            if self.player_in_sight:
+                self.last_pos_for_smart_path = vec(0,0)
+                to_target = vec(self.game.player.rect.center) - vec(self.rect.center)
+                if to_target.length() > 0:
+                    move_dir = to_target.normalize()
+                    self.vel = move_dir * GUARD_SNELHEID_CHASE
+                    self.target_rot = move_dir.angle_to(vec(1, 0))
+                    self.move_and_collide()
+
+            elif self.last_seen_pos and (self.last_pos_for_smart_path == vec(0,0) or (self.last_pos_for_smart_path - self.last_seen_pos).magnitude_squared() > HEAR_DIST**2 or self.can_hear_player): #last_seen_pos is True als last_seen_pos != (0,0)
+                '''consitentiefout (664): gebruik of gwn de vector of VECTOR == vec(0,0)'''
+                self.last_pos_for_smart_path = self.last_seen_pos
+                pos_on_map = (int(self.rect.centerx/TILESIZE), int(self.rect.centery/TILESIZE))
+                player_pos_on_map = (int(self.last_seen_pos[0]/TILESIZE), int(self.last_seen_pos[1]/TILESIZE))
+                self.chase_path = cut_path(self, simplefy_path(find_path(self.game, pos_on_map, player_pos_on_map)), self.view_dist//TILESIZE)
                 try: 
-                    to_target = vec(a_star_path[1])*TILESIZE - vec(self.rect.center) +(TILESIZE/2, TILESIZE/2) #laatste term is omdat de map werkt met ander soort coordinaten
+                    to_target = vec(self.chase_path[1])*TILESIZE - vec(self.rect.center) +(TILESIZE/2, TILESIZE/2) #laatste term is omdat de map werkt met ander soort coordinaten
                 
                     if to_target.length() > 0:
                         move_dir = to_target.normalize()
                         self.vel = move_dir * GUARD_SNELHEID_CHASE
                         self.target_rot = move_dir.angle_to(vec(1, 0))
                         self.move_and_collide()
-
-                    if to_target.length() < 4:
-                        self.state = "search"
-                        pos_on_map = (int(self.rect.x/TILESIZE), int(self.rect.y/TILESIZE))
-                        self.retreat_path = simplefy_path(find_path(self.game,pos_on_map,self.chase_start_pos))
-                        self.retreat_path.reverse()
-                        #print(self.retreat_path)
-                        self.search_start_time = current_time
-                        self.chase_start_pos == None
                         
                 except: pass #game crashte soms zonder deze try-except, is sinds aanpassing niet meer gebeurd, trad op als a_star_path 1 element had    
+            else:
+                try:
+                    to_target = vec(self.chase_path[1])*TILESIZE - vec(self.rect.center) +(TILESIZE/2, TILESIZE/2) #laatste term is omdat de map werkt met ander soort coordinaten
+                
+                    if to_target.length() > 0:
+                        move_dir = to_target.normalize()
+                        self.vel = move_dir * GUARD_SNELHEID_CHASE
+                        self.target_rot = move_dir.angle_to(vec(1, 0))
+                        self.move_and_collide()
+                        
+                    if to_target.length() < 4 and len(self.chase_path) > 2:
+                        self.chase_path.pop(1)
+                except:
+                    pass
+                
+                #als guard self.chase_path[1] bereikt heeft moet ie doordoen
+            if (len(self.chase_path) > 0 and (vec(self.chase_path[-1])*TILESIZE - vec(self.rect.center) +(TILESIZE/2, TILESIZE/2)).length() < 4):
+                self.state = "search"
+                pos_on_map = (int(self.rect.x/TILESIZE), int(self.rect.y/TILESIZE))
+                self.retreat_path = cut_path(self, simplefy_path(find_path(self.game,pos_on_map,self.chase_start_pos)), self.view_dist//TILESIZE*4)
+                self.retreat_path.reverse()
+                self.search_start_time = current_time
+                self.chase_start_pos == None
+
+            elif len(self.chase_path) == 1:
+                to_target = vec(self.chase_path[0])*TILESIZE - vec(self.rect.center) +(TILESIZE/2, TILESIZE/2)
+                if to_target.length() > 0:
+                    move_dir = to_target.normalize()
+                    self.vel = move_dir * GUARD_SNELHEID_CHASE
+                    self.target_rot = move_dir.angle_to(vec(1, 0))
+                    self.move_and_collide()
+
 
         elif self.state == "search":
             self.vel = vec(0, 0)
-            self.target_rot += 20 * self.game.dt  # rustig rondkijken
+            self.target_rot += ROTATE_SPEED/5 * self.game.dt  # rustig rondkijken
             if current_time - self.search_start_time > self.search_time:
                 self.state = "patrol"
-        
-    def DEZE_SHIT_WERKT_NIET_STOP_MET_HET_TE_PROBEREN_FIXEN(self): #jawel laat het staan want ik heb de code nog nodig, doe gwn deze def toe
-    # def update(self):
-    #     current_time = pg.time.get_ticks()
-
-    #     if self.detect_player():
-    #         if self.state != "chase":
-    #             self.state = "chase"
-    #             self.last_seen_pos = vec(self.game.player.rect.center)
-    #             self.last_seen_time = current_time
-    #             self.alert_nearby_guards()
-
-    #     # Rotatie zoals bij gewone guard
-    #     rot_diff = (self.target_rot - self.rot) % 360
-    #     if rot_diff > 180:
-    #         rot_diff -= 360
-    #     rotation_step = self.rotate_speed * self.game.dt
-    #     self.rot += rotation_step if rot_diff > 0 else -rotation_step if abs(rot_diff) >= rotation_step else 0
-    #     self.rot %= 360
-
-    #     if self.state == "patrol":
-    #         self.view_angle = self.view_angle_default
-    #         self.view_dist = self.view_dist_default
-    #         move_dir = self.navigate(self.pos, self.target)
-    #         if move_dir.length() > 0:
-    #             self.target_rot = move_dir.angle_to(vec(1, 0))
-    #             self.vel = move_dir * self.speed
-    #             self.move_and_collide()
-
-    #         if self.at_checkpoint():
-    #             self.checkpoint = (self.checkpoint + 1) % len(self.route)
-    #             self.target = vec(self.route[(self.checkpoint + 1) % len(self.route)]) * TILESIZE
-
-    #     elif self.state in ["chase", "chase_help"]:
-    #         self.view_angle = self.view_angle_chase
-    #         self.view_dist = self.view_dist_chase
-
-    #         if self.detect_player():
-    #             self.last_seen_pos = vec(self.game.player.rect.center)
-    #             self.last_seen_time = current_time
-    #             if self.state == "chase":
-    #                 self.alert_nearby_guards()
-
-    #         time_since_seen = current_time - self.last_seen_time
-    #         if time_since_seen > CHASE_TIMEOUT:
-    #             self.state = "search"
-    #             self.search_start_time = current_time
-    #             self.can_signal = True
-    #             self.stuck_timer = 0
-    #             return
-
-    #         to_target = self.move_and_dodge_wall()
-
-    #         if to_target.length() > 0:
-    #             move_dir = to_target.normalize()
-    #             self.vel = move_dir * GUARD_SNELHEID_CHASE
-    #             self.target_rot = move_dir.angle_to(vec(1, 0))
-    #             self.move_and_collide()
-
-    #             if self.pos.distance_to(self.prev_pos) < STUCK_DISTANCE_THRESHOLD:
-    #                 self.stuck_timer += self.game.dt * 1000
-    #             else:
-    #                 self.stuck_timer = 0
-    #             self.prev_pos = vec(self.pos)
-
-    #             if self.stuck_timer > STUCK_TIME_LIMIT or to_target.length() < 4:
-    #                 self.state = "search"
-    #                 self.search_start_time = current_time
-    #                 self.can_signal = True
-    #                 self.stuck_timer = 0
-
-    #     elif self.state == "search":
-    #         self.vel = vec(0, 0)
-    #         self.target_rot += 20 * self.game.dt
-    #         if current_time - self.search_start_time > self.search_time:
-    #             self.state = "patrol"
-
-    # def move_and_dodge_wall(self):
-    #     if not self.last_seen_pos:
-    #         return vec(0, 0)
-
-    #     start = vec(self.rect.center)
-    #     end = self.last_seen_pos
-    #     to_target = end - start
-
-    #     if self.line_of_sight_clear(start, end):
-    #         return to_target
-
-    #     blocking_wall = self.line_of_sight_clear(start, end)
-    #     if isinstance(blocking_wall, Wall):
-    #         wall_center = vec(blocking_wall.rect.center)
-    #         wall_size = vec(blocking_wall.rect.size)
-    #         offsets = [
-    #             vec(-1, -1), vec(1, -1),
-    #             vec(-1, 1), vec(1, 1)
-    #         ]
-
-    #         closest_point = None
-    #         min_distance = float('inf')
-
-    #         for offset in offsets:
-    #             corner = wall_center + (offset * wall_size / 2) + (offset * TILESIZE / 2)
-    #             if self.line_of_sight_clear(start, corner):
-    #                 dist = (corner - start).length_squared()
-    #                 if dist < min_distance:
-    #                     min_distance = dist
-    #                     closest_point = corner
-
-    #         if closest_point:
-    #             return closest_point - start
-
-    #     return to_target  # fallback
-        pass

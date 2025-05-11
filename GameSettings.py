@@ -45,7 +45,7 @@ ADAPTIVE_CONES = False
 
 # Zicht instellingen
 TILE_VIEW_DISTANCE = 10  # aantal tegels
-TILE_HEAR_DISTANCE = 2 #echte afstand is dit min 1 want hij rekent vanaf de centers
+TILE_HEAR_DISTANCE = 1.99 #echte afstand is dit min 1 want hij rekent vanaf de centers
 VIEW_DIST = TILE_VIEW_DISTANCE * TILESIZE  # in pixels
 HEAR_DIST = TILE_HEAR_DISTANCE * TILESIZE
 VISIE_BREEDTE = 37.5  # halve breedte zichtveld in graden
@@ -63,3 +63,10 @@ cooldown_time = 3000  # tijd tussen het activeren van de trap en het kunnen gebr
 
 #aantal punten die tegelijk op map aanwezig zijn (niet meer dan aantal mogelijke locaties)
 AANTAL_PUNTEN = 15
+
+#speler load walls afstand:
+MAX_WALL_DIST = BREEDTE
+MAX_PLAYER_MOVE = MAX_WALL_DIST/2
+
+#slimme guard cut_path_vieuw_dist_factor: (in pathfinding: cut_path)
+cut_path_vieuw_dist_factor = 1.4

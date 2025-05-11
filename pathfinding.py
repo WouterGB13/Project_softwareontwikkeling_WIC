@@ -70,7 +70,7 @@ def find_path(game, start_loc_map, end_loc_map): #de locaties zijn tuples (bv: (
             aantal_keren_langs_pos[positie] = 1
             
         if timer == 1000:
-            print("time's up")
+            print("time's up") #als deze afgaat was het pad te moeilijk te vinden, aka te ver of onmogelijk
             snelste_weg.append(False)
             
     snelste_weg.append(True)
@@ -107,8 +107,9 @@ def simplefy_path(path):
             if geskipped2: break
     return path
 
-def cut_path(guard, path, vision_range): #guard voor line_of_sight_clear functie
-    aantal_stappen = min(int(vision_range*1.4), len(path)-1) #(1.4 = sqrt(2)) aantal_stappen is hoe ver in ons pad naar de speler we gaan kijken om te zien of we kunnen afsnijden
+
+def cut_path(guard, path, vision_range):
+    aantal_stappen = min(int(vision_range*cut_path_vieuw_dist_factor), len(path)-1) #(1.4 = sqrt(2)) aantal_stappen is hoe ver in ons pad naar de speler we gaan kijken om te zien of we kunnen afsnijden
     #zelf_positie = path[0] #IN MAZE COORDINATEN, naar pixels? --> pos*TILESIZE + TILESIZE/2
     zelf_pixel_pos = adding_tuples((path[0][0] * TILESIZE, path[0][1] * TILESIZE), (TILESIZE/2, TILESIZE/2))
     for stap in range(aantal_stappen, 1, -1): #begin van ver naar dichtbij (tot 1 want 0 is eigen positie)
@@ -122,12 +123,36 @@ def cut_path(guard, path, vision_range): #guard voor line_of_sight_clear functie
 
         vrij = True
         for hoek in pos_tile_hoeken:
-            if guard.line_of_sight_clear(zelf_pixel_pos, hoek, guard.smart_walls) != True:
+            if guard.line_of_sight_clear(zelf_pixel_pos, hoek, guard.game.player.smart_walls) != True:
                 vrij = False
                 break
         if vrij: #haal overbodige posities uit de lijst
             for z in range(1, stap):
-                print(path)
                 path.pop(1)
+            break
+    return path
+
+
+def reverse_cut_path(guard, path, vision_range):
+    aantal_stappen = min(int(vision_range*cut_path_vieuw_dist_factor), len(path)-1) #(1.4 = sqrt(2)) aantal_stappen is hoe ver in ons pad naar de speler we gaan kijken om te zien of we kunnen afsnijden
+    #zelf_positie = path[0] #IN MAZE COORDINATEN, naar pixels? --> pos*TILESIZE + TILESIZE/2
+    zelf_pixel_pos = adding_tuples((path[-1][0] * TILESIZE, path[-1][1] * TILESIZE), (TILESIZE/2, TILESIZE/2))
+    for stap in range(len(path) - aantal_stappen, len(path)-1, 1):
+        ppms = adding_tuples((path[stap][0] * TILESIZE, path[stap][1] * TILESIZE), (int(TILESIZE/2), int(TILESIZE/2))) #pixel_pos_mogelijke_stap (onze stap maar nu in pixel coordinaten)
+        pos_tile_hoeken = [
+            adding_tuples(ppms, (-TILESIZE/2,-TILESIZE/2)), #LinksBoven
+            adding_tuples(ppms, (TILESIZE/2,-TILESIZE/2)), #RB
+            adding_tuples(ppms, (-TILESIZE/2,TILESIZE/2)), #LO
+            adding_tuples(ppms, (TILESIZE/2,TILESIZE/2)) #RO
+        ]
+
+        vrij = True
+        for hoek in pos_tile_hoeken:
+            if guard.line_of_sight_clear(zelf_pixel_pos, hoek, guard.game.player.smart_walls) != True:
+                vrij = False
+                break
+        if vrij: #haal overbodige posities uit de lijst
+            for z in range(1, len(path) - stap - 1):  #DEZE OOK
+                path.pop(-2)
             break
     return path
