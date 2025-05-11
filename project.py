@@ -161,8 +161,6 @@ class Game:
         """Update alle objecten en check botsingen."""
         for entity in self.entities:
             entity.update()
-            if self.damage_cd !=0:
-                self.damage_cd -= 1
             if isinstance(entity, Guard):
                 if self.player.rect.colliderect(entity.rect):
                     self.player.pos = self.startpos.copy()
