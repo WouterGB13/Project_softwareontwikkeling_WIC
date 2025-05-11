@@ -53,7 +53,6 @@ RESOLUTIE = 10  # hoeveelheid straal-lijnen in zichtveld (hoger = gedetailleerde
 
 # Search & Chase timers (in milliseconden)
 SEARCH_TIME_MS = 10000  # zoektijd na speler uit zicht
-CHASE_TIME_MS = 0  # niet gebruikt momenteel
 STUCK_DISTANCE_THRESHOLD = 1.5  # pixels
 STUCK_TIME_LIMIT = 2000  # milliseconden (2 seconden)
 CHASE_TIMEOUT = 3000  # milliseconden (3 seconden)
@@ -65,8 +64,8 @@ cooldown_time = 3000  # tijd tussen het activeren van de trap en het kunnen gebr
 AANTAL_PUNTEN = 15
 
 #speler load walls afstand:
-MAX_WALL_DIST = BREEDTE
-MAX_PLAYER_MOVE = MAX_WALL_DIST/2
+MAX_WALL_DIST = BREEDTE #hoe ver van spelers worden muren geprocessed (straal)
+MAX_PLAYER_MOVE = MAX_WALL_DIST/2 #afstand die speler moet bewogen zijn eer gerenderde muren geupdate worden
 
 #slimme guard cut_path_vieuw_dist_factor: (in pathfinding: cut_path)
-cut_path_vieuw_dist_factor = 1.4
+cut_path_view_dist_factor = 1.4 #bepalend om te zien hoever het zoekalgoritme zijn pad kan inkorten

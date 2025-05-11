@@ -101,7 +101,7 @@ class Game:
         # Installeer de camera om mee te bewegen met de speler
         self.camera = Camera(self.kaart.BREEDTE, self.kaart.HOOGTE)
 
-        self.player.load_close_walls()
+        self.player.load_close_walls() #render walls een 1e keer
 
     def run(self):
         """Hoofdloop: verwerkt input, updates en tekent frames."""
@@ -205,10 +205,8 @@ class Game:
 
         for exit in self.exits:
             self.screen.blit(exit.image, self.camera.apply(exit))
+            exit.draw(self.screen, self.camera)
 
-
-            if isinstance(entity, Exit):
-                entity.draw(self.screen, self.camera)
         self.draw_lives()
         self.draw_score()
         pg.display.flip()
@@ -216,7 +214,7 @@ class Game:
     def teken_grid(self):
         """Teken raster op de achtergrond voor visuele referentie."""
         deltax, deltay = self.camera.return_shift_of_screen()
-        for x in range(deltax - TILESIZE//2, BREEDTE+deltax+TILESIZE, TILESIZE):
+        for x in range(deltax - TILESIZE//2, BREEDTE+deltax+TILESIZE, TILESIZE): #meebewegen met camera
             pg.draw.line(self.screen, LICHTGRIJS, (x, 0), (x, HOOGTE))
         for y in range(deltay - TILESIZE//2, HOOGTE+deltay+TILESIZE, TILESIZE):
             pg.draw.line(self.screen, LICHTGRIJS, (0, y), (BREEDTE, y))

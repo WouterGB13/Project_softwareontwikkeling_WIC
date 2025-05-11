@@ -1,9 +1,10 @@
 from GameSettings import *
 
-def adding_tuples(t1, t2):
+def adding_tuples(t1, t2): #voor eigen gemak
     return (t1[0] + t2[0], t1[1] + t2[1])
 
 def find_path(game, start_loc_map, end_loc_map): #de locaties zijn tuples (bv: (2,3))
+    #A*-achtig pathfinding algoritme
     map = game.kaart.data
     snelste_weg = [start_loc_map]
     opties = []
@@ -15,7 +16,7 @@ def find_path(game, start_loc_map, end_loc_map): #de locaties zijn tuples (bv: (
     positie = start_loc_map
     vorige_posities = [None]
     
-    timer = 0
+    timer = 0 #om niet permanent in while loop te blijven
     
     while positie != end_loc_map and timer < 1000:
         timer += 1
@@ -23,30 +24,30 @@ def find_path(game, start_loc_map, end_loc_map): #de locaties zijn tuples (bv: (
         optie_kosten.clear()
         
         for pos in aantal_keren_langs_pos:
-            if aantal_keren_langs_pos[pos] == 3 and not pos in vast_komen_te_zitter:
+            if aantal_keren_langs_pos[pos] == 3 and not pos in vast_komen_te_zitter: #niet nuttige locatie
                 vast_komen_te_zitter.append(pos)
                 
         for optie in beweegopties:
             som = adding_tuples(positie, optie)
-            if map[som[1]][som[0]] != '1':
+            if map[som[1]][som[0]] != '1': #als dit geen muur is
                 opties.append(som)
                 optie_kosten.append((som[0] - end_loc_map[0])**2 + (som[1] - end_loc_map[1])**2)
         
         if len(opties) > 1:
-            for pos in vast_komen_te_zitter:
-                for index in range(len(opties)):
+            for pos in vast_komen_te_zitter: #filter onnuttige locaties uit
+                for index in range(len(opties)): 
                     if opties[index] == pos:
                         opties.pop(index)
                         optie_kosten.pop(index)
                         break
-            for vorige_pos in vorige_posities:
+            for vorige_pos in vorige_posities: #filteren reed bezochte locaties (vermijden, niet uitsluiten)
                 for index in range(len(opties)):
                     if opties[index] == vorige_pos:
                         opties.pop(index)
                         optie_kosten.pop(index)
                         break       
             if len(opties) == 0:
-                vorige_posities = [None]
+                vorige_posities = [None] #reset bezochte locaties
                 continue
                     
             laagste_kost_index = 0
@@ -60,7 +61,7 @@ def find_path(game, start_loc_map, end_loc_map): #de locaties zijn tuples (bv: (
             vorige_posities.append(positie)
             positie = opties[0]
         else:
-            snelste_weg.append(False)
+            snelste_weg.append(False) #niet mogelijk om pad te vinden
             break
             
         snelste_weg.append(positie)
@@ -74,14 +75,14 @@ def find_path(game, start_loc_map, end_loc_map): #de locaties zijn tuples (bv: (
             snelste_weg.append(False)
             
     snelste_weg.append(True)
-    snelste_weg.pop(-1)
+    snelste_weg.pop(-1) #onmiddellijk weg maar nuttig voor ontwerpen van algoritme
     return snelste_weg
 
 
 def simplefy_path(path):
     geskipped1 = False
     geskipped2 = False
-    for a in range(len(path)*2):
+    for a in range(len(path)*2): #vermijd onnodige lussen in pad (2 keer over zelfde punt gaan)
         for x in range(len(path)):
             geskipped1 = False
             for y in range(len(path)):
@@ -92,7 +93,7 @@ def simplefy_path(path):
                     break
             if geskipped1: break
             
-    for a in range(10):
+    for a in range(10): #vermijd omwegen (snijd omwegen af als begin en eind naast elkaar liggen)
         for x in range(len(path)):
             geskipped2 = False
             for y in range(x, len(path)):
@@ -108,8 +109,8 @@ def simplefy_path(path):
     return path
 
 
-def cut_path(guard, path, vision_range):
-    aantal_stappen = min(int(vision_range*cut_path_vieuw_dist_factor), len(path)-1) #(1.4 = sqrt(2)) aantal_stappen is hoe ver in ons pad naar de speler we gaan kijken om te zien of we kunnen afsnijden
+def cut_path(guard, path, vision_range): #zorgt dat diagonale bewegin mogelijk is (trapbeweging vermijden wanneer mogelijk)
+    aantal_stappen = min(int(vision_range*cut_path_view_dist_factor), len(path)-1) #(1.4 = sqrt(2)) aantal_stappen is hoe ver in ons pad naar de speler we gaan kijken om te zien of we kunnen afsnijden
     #zelf_positie = path[0] #IN MAZE COORDINATEN, naar pixels? --> pos*TILESIZE + TILESIZE/2
     zelf_pixel_pos = adding_tuples((path[0][0] * TILESIZE, path[0][1] * TILESIZE), (TILESIZE/2, TILESIZE/2))
     for stap in range(aantal_stappen, 1, -1): #begin van ver naar dichtbij (tot 1 want 0 is eigen positie)
@@ -133,8 +134,8 @@ def cut_path(guard, path, vision_range):
     return path
 
 
-def reverse_cut_path(guard, path, vision_range):
-    aantal_stappen = min(int(vision_range*cut_path_vieuw_dist_factor), len(path)-1) #(1.4 = sqrt(2)) aantal_stappen is hoe ver in ons pad naar de speler we gaan kijken om te zien of we kunnen afsnijden
+def reverse_cut_path(guard, path, vision_range): #idem maar nadat retreat_path gereverset is
+    aantal_stappen = min(int(vision_range*cut_path_view_dist_factor), len(path)-1) #(1.4 = sqrt(2)) aantal_stappen is hoe ver in ons pad naar de speler we gaan kijken om te zien of we kunnen afsnijden
     #zelf_positie = path[0] #IN MAZE COORDINATEN, naar pixels? --> pos*TILESIZE + TILESIZE/2
     zelf_pixel_pos = adding_tuples((path[-1][0] * TILESIZE, path[-1][1] * TILESIZE), (TILESIZE/2, TILESIZE/2))
     for stap in range(len(path) - aantal_stappen, len(path)-1, 1):

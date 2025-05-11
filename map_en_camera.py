@@ -9,20 +9,19 @@ class Map:
     """Laadt een tile-based map vanaf tekstbestand."""
     def __init__(self, filename: str):
         self.data = []
-        self.guard_waypoints_map: dict[str, list[tuple[int, int]]] = {}
 
         with open(filename, 'r') as map_file:
             for row_idx, line in enumerate(map_file):
                 clean_line = line.strip()
-                self.data.append(clean_line)
+                self.data.append(clean_line) #maak een lijst uit txt file die verwerkt kan worden tot correcte entities
 
-        self.tileBREEDTE = len(self.data[0])
-        self.tileHOOGTE = len(self.data)
-        self.BREEDTE = self.tileBREEDTE * TILESIZE
+        self.tileBREEDTE = len(self.data[0]) #bepaal breedte map (in tiles)
+        self.tileHOOGTE = len(self.data) #idem hoogte
+        self.BREEDTE = self.tileBREEDTE * TILESIZE #pixels
         self.HOOGTE = self.tileHOOGTE * TILESIZE
 
 class Camera:
-    """Beheert zichtbare viewport die over de map beweegt."""
+    """Beheert zichtbare gebied dat over de map beweegt."""
     def __init__(self, width: int, height: int):
         self.camera = pg.Rect(0, 0, width, height)
         self.width = width
@@ -36,8 +35,8 @@ class Camera:
         """Verschuift een willekeurige rect (zoals voor tekst) relatief aan camera."""
         return rect.move(self.camera.topleft)
     
-    def return_shift_of_screen(self): #specefiek voor grid te laten bewegen (dus de funcy shit dat je hier ziet kan door de draw_grid functie deels verklaart worden)
-        return int(self.camera.x - BREEDTE/2)%TILESIZE, int(self.camera.y - HOOGTE/2)%TILESIZE #modulo door TILESIZE bcs we willen ons grid niet uit ons scherm laden en vanaf dat we een tile verder zijn moet deze offset zich reseten
+    def return_shift_of_screen(self): #specifiek om grid te laten bewegen (dus de funky shit dat je hier ziet kan door de draw_grid functie deels verklaard worden)
+        return int(self.camera.x - BREEDTE/2)%TILESIZE, int(self.camera.y - HOOGTE/2)%TILESIZE #modulo door TILESIZE want we willen ons grid niet uit ons scherm laden en vanaf dat we een tile verder zijn moet deze offset zich reseten
 
 
     def update(self, target):
