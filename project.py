@@ -213,9 +213,10 @@ class Game:
 
     def teken_grid(self):
         """Teken raster op de achtergrond voor visuele referentie."""
-        for x in range(0, BREEDTE, TILESIZE):
+        deltax, deltay = self.camera.return_shift_of_screen()
+        for x in range(deltax - TILESIZE//2, BREEDTE+deltax+TILESIZE, TILESIZE):
             pg.draw.line(self.screen, LICHTGRIJS, (x, 0), (x, HOOGTE))
-        for y in range(0, HOOGTE, TILESIZE):
+        for y in range(deltay - TILESIZE//2, HOOGTE+deltay+TILESIZE, TILESIZE):
             pg.draw.line(self.screen, LICHTGRIJS, (0, y), (BREEDTE, y))
 
     def reset_game(self):
