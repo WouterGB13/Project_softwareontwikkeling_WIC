@@ -148,6 +148,7 @@ class Player(Entity):
         self.stun_start_time = 0
         self.stun_duration = 0
         self.lives = MAX_LIVES
+        self.last_wall_pos = self.pos.copy()
 
     def get_keys(self):
         self.vel = vec(0, 0)
@@ -164,8 +165,16 @@ class Player(Entity):
         if self.vel.x != 0 and self.vel.y != 0:
             self.vel *= math.sqrt(2) / 2
 
-    def collide_with_walls(self, direction):
+    def load_close_walls(self):
+        self.last_wall_pos = self.pos.copy()
+        load_distance = max(BREEDTE, HOOGTE)
+        self.smart_walls = []
         for wall in self.game.walls:
+            if (wall.pos - self.last_wall_pos).magnitude_squared() < load_distance**2:
+                self.smart_walls.append(wall)
+
+    def collide_with_walls(self, direction):
+        for wall in self.smart_walls:
             if self.rect.colliderect(wall.rect):
                 if direction == 'x':
                     if self.vel.x > 0:
@@ -198,6 +207,9 @@ class Player(Entity):
                 return  # speler kan tijdelijk niks doen
             else:
                 self.stunned = False
+
+        if (self.pos - self.last_wall_pos).magnitude_squared() > BREEDTE**2 - TILESIZE:
+            self.load_close_walls()
 
         # Eerst X-beweging
         self.pos.x += self.vel.x * self.game.dt
@@ -269,6 +281,9 @@ class Guard(BaseGuard):
         self.rotate_speed = ROTATE_SPEED
         self.vel = vec(0, 0)
 
+        self.last_wall_pos = self.pos.copy()
+        self.load_close_walls()
+
     def reset(self):
         self.state = "patrol"
         self.last_seen_pos = None
@@ -286,7 +301,6 @@ class Guard(BaseGuard):
         # Startwaarden
         self.view_angle = self.view_angle_default
         self.view_dist = self.view_dist_default
-        
         self.search_time = SEARCH_TIME_MS
         self.rot = 0
         self.rotate_speed = ROTATE_SPEED
@@ -383,7 +397,7 @@ class Guard(BaseGuard):
             if abs(angle) > self.view_angle:
                 continue  # buiten zichtveld
 
-            if self.line_of_sight_clear(vec(self.rect.center), point) == True:
+            if self.line_of_sight_clear(vec(self.rect.center), point, self.smart_walls) == True:
                 return True  # speler gedetecteerd!
 
         return False  # geen enkele hoek voldeed
@@ -395,15 +409,22 @@ class Guard(BaseGuard):
         else:
             return False
 
-    def line_of_sight_clear(self, start, end):
+    def line_of_sight_clear(self, start, end, walls):
         #https://www.pygame.org/docs/ref/rect.html#pygame.Rect.clipline
-        for wall in self.game.walls:
-            clipline = wall.rect.clipline(start, end)
-            if clipline:
+        for wall in walls:
+            # clipline = wall.rect.clipline(start, end)
+            # if clipline:
+            if wall.rect.clipline(start, end):
                 return wall  # geef het Wall object terug
         return True  # vrije zichtlijn
-
     
+    def load_close_walls(self):
+        self.last_wall_pos = self.pos.copy()
+        load_distance = max(BREEDTE, HOOGTE)
+        self.smart_walls = []
+        for wall in self.game.walls:
+            if (wall.pos - self.last_wall_pos).magnitude_squared() < load_distance**2:
+                self.smart_walls.append(wall)
 
     def alert_nearby_guards(self):
         for entity in self.game.entities:
@@ -459,7 +480,7 @@ class Guard(BaseGuard):
                 # for wall in self.game.walls:
                 #     if (vec(wall.rect.center) - vec(self.rect.center)).magnitude_squared < (VIEW_DIST+2)*TILESIZE:
                 #         self.close_walls.append(wall)
-                punt = self.line_of_sight_clear(center, point)
+                punt = self.line_of_sight_clear(center, point, self.smart_walls)
                 if punt != True: #volgende code komt vooral uit line_of_sight_clear():
                     point = punt                        
 
@@ -610,7 +631,7 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad
                 self.next_target = self.target
                 self.current_checkpoint = (self.checkpoint)
                 self.target = self.retreat_path[-1][0]*TILESIZE,self.retreat_path[-1][1]*TILESIZE
-                print(self.target)
+                #print(self.target)
             move_dir = self.navigate(self.pos, self.target)
             self.view_angle = self.view_angle_default
             self.view_dist = self.view_dist_default
@@ -644,8 +665,8 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad
             if self.last_seen_pos:
                 pos_on_map = (int(self.rect.x/TILESIZE), int(self.rect.y/TILESIZE))
                 player_pos_on_map = (int(self.game.player.rect.x/TILESIZE), int(self.game.player.rect.y/TILESIZE))
-                a_star_path = simplefy_path(find_path(self.game, pos_on_map, player_pos_on_map))
-                #print(a_star_path)
+                a_star_path = cut_path(self, simplefy_path(find_path(self.game, pos_on_map, player_pos_on_map)), self.view_dist)
+                #a_star_path = simplefy_path(find_path(self.game, pos_on_map, player_pos_on_map))
                 try: 
                     to_target = vec(a_star_path[1])*TILESIZE - vec(self.rect.center) +(TILESIZE/2, TILESIZE/2) #laatste term is omdat de map werkt met ander soort coordinaten
                 
@@ -654,16 +675,17 @@ class Slimme_Guard(Guard): #gegenereerd door een '1' vooraan het pad
                         self.vel = move_dir * GUARD_SNELHEID_CHASE
                         self.target_rot = move_dir.angle_to(vec(1, 0))
                         self.move_and_collide()
-                except: pass #game crashte soms zonder deze try-except, is sinds aanpassing niet meer gebeurd, trad op als a_star_path 1 element had    
 
-                if to_target.length() < 4:
-                    self.state = "search"
-                    pos_on_map = (int(self.rect.x/TILESIZE), int(self.rect.y/TILESIZE))
-                    self.retreat_path = simplefy_path(find_path(self.game,pos_on_map,self.chase_start_pos))
-                    self.retreat_path.reverse()
-                    print(self.retreat_path)
-                    self.search_start_time = current_time
-                    self.chase_start_pos == None
+                    if to_target.length() < 4:
+                        self.state = "search"
+                        pos_on_map = (int(self.rect.x/TILESIZE), int(self.rect.y/TILESIZE))
+                        self.retreat_path = simplefy_path(find_path(self.game,pos_on_map,self.chase_start_pos))
+                        self.retreat_path.reverse()
+                        #print(self.retreat_path)
+                        self.search_start_time = current_time
+                        self.chase_start_pos == None
+                        
+                except: pass #game crashte soms zonder deze try-except, is sinds aanpassing niet meer gebeurd, trad op als a_star_path 1 element had    
 
         elif self.state == "search":
             self.vel = vec(0, 0)

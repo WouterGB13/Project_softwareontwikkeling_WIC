@@ -101,6 +101,8 @@ class Game:
         # Installeer de camera om mee te bewegen met de speler
         self.camera = Camera(self.kaart.BREEDTE, self.kaart.HOOGTE)
 
+        self.player.load_close_walls()
+
     def run(self):
         """Hoofdloop: verwerkt input, updates en tekent frames."""
         self.new()
