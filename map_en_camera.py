@@ -35,6 +35,10 @@ class Camera:
     def apply_rect(self, rect: pg.Rect) -> pg.Rect:
         """Verschuift een willekeurige rect (zoals voor tekst) relatief aan camera."""
         return rect.move(self.camera.topleft)
+    
+    def return_shift_of_screen(self): #specefiek voor grid te laten bewegen (dus de funcy shit dat je hier ziet kan door de draw_grid functie deels verklaart worden)
+        return int(self.camera.x - BREEDTE/2)%TILESIZE, int(self.camera.y - HOOGTE/2)%TILESIZE #modulo door TILESIZE bcs we willen ons grid niet uit ons scherm laden en vanaf dat we een tile verder zijn moet deze offset zich reseten
+
 
     def update(self, target):
         """Camera volgt het opgegeven target (bv. speler)."""
