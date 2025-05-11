@@ -62,4 +62,4 @@ CHASE_TIMEOUT = 3000  # milliseconden (3 seconden)
 cooldown_time = 3000  # tijd tussen het activeren van de trap en het kunnen gebruiken van de trap (in milliseconden)
 
 #aantal punten die tegelijk op map aanwezig zijn (niet meer dan aantal mogelijke locaties)
-AANTAL_PUNTEN = 3
+AANTAL_PUNTEN = 15
